@@ -127,8 +127,8 @@ function ControlTab({ state, onAction }: ControlTabProps) {
           onClick={showWaiting}
           className={`w-full rounded-xl py-3 font-semibold text-base border-2 transition-colors ${
             state.status === 'waiting'
-              ? 'bg-gray-200 border-gray-300 text-gray-600'
-              : 'bg-white border-gray-300 text-gray-700 active:bg-gray-100'
+              ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+              : 'bg-white border-gray-200 text-gray-800 active:bg-indigo-50 active:border-indigo-300'
           }`}
         >
           Show Waiting Screen

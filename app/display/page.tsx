@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import type { GameState } from '@/lib/types';
 
 // Strip any "B - " letter prefix so the participant never sees it
@@ -14,22 +14,34 @@ function displayWord(raw: string): string {
   return t;
 }
 
+// Stop polling after 4 hours of continuous visibility — enough for any event.
+const MAX_ACTIVE_MS = 4 * 60 * 60 * 1000;
+
 export default function DisplayPage() {
   const [state, setState] = useState<GameState | null>(null);
   const [animKey, setAnimKey] = useState(0);
+  const [stopped, setStopped] = useState(false);
+  const lastSig = useRef('');
+  const startedAt = useRef(Date.now());
 
   useEffect(() => {
     let mounted = true;
-    let lastSig = '';
+    let intervalId: ReturnType<typeof setInterval> | null = null;
 
     const poll = async () => {
+      if (!mounted || document.hidden) return;
+      if (Date.now() - startedAt.current > MAX_ACTIVE_MS) {
+        if (intervalId) clearInterval(intervalId);
+        setStopped(true);
+        return;
+      }
       try {
         const res = await fetch('/api/game', { cache: 'no-store' });
         if (!res.ok || !mounted) return;
         const data: GameState = await res.json();
         const sig = `${data.status}:${data.currentWord}`;
-        if (sig !== lastSig) {
-          lastSig = sig;
+        if (sig !== lastSig.current) {
+          lastSig.current = sig;
           setAnimKey(k => k + 1);
         }
         setState(data);
@@ -38,13 +50,35 @@ export default function DisplayPage() {
       }
     };
 
+    // Resume polling when tab becomes visible again
+    const onVisibilityChange = () => {
+      if (!document.hidden) poll();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     poll();
-    const id = setInterval(poll, 1000);
+    intervalId = setInterval(poll, 1000);
+
     return () => {
       mounted = false;
-      clearInterval(id);
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, []);
+
+  if (stopped) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
+        <p className="text-gray-600 text-xl">Display timed out.</p>
+        <button
+          onClick={() => { startedAt.current = Date.now(); setStopped(false); }}
+          className="px-6 py-3 bg-white text-black font-semibold rounded-xl text-sm"
+        >
+          Resume
+        </button>
+      </div>
+    );
+  }
 
   if (!state) {
     return (

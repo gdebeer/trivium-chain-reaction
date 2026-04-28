@@ -227,6 +227,21 @@ function ControlTab({ state, onAction }: ControlTabProps) {
               </div>
             ) : null}
           </div>
+
+          {/* Participant view preview */}
+          <div className="px-4 pb-4 flex-shrink-0">
+            <p className="text-xs text-gray-400 font-medium mb-1.5 uppercase tracking-wide">Participant screen</p>
+            <div className="bg-black rounded-2xl h-28 flex items-center justify-center overflow-hidden">
+              {state.status === 'waiting' || !state.currentWord ? (
+                <p className="text-gray-600 text-sm font-light tracking-widest uppercase">Waiting…</p>
+              ) : (
+                <p className="text-white font-black text-center px-4 leading-none"
+                   style={{ fontSize: 'clamp(1.25rem, 6vw, 2.5rem)' }}>
+                  {state.currentWord}
+                </p>
+              )}
+            </div>
+          </div>
         </>
       )}
     </div>

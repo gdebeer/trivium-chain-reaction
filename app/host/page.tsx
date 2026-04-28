@@ -14,6 +14,16 @@ async function sendAction(body: object): Promise<GameState> {
   return res.json();
 }
 
+// ─── Word parsing ────────────────────────────────────────────────────────────
+
+// Supports optional "B - Plumber" format. Returns letter (for host display)
+// and word (sent to participants). Plain words with no letter prefix also work.
+function parseWord(raw: string): { letter: string | null; word: string } {
+  const match = raw.match(/^([A-Za-z])\s*[-:]\s*(.+)$/);
+  if (match) return { letter: match[1].toUpperCase(), word: match[2].trim() };
+  return { letter: null, word: raw.trim() };
+}
+
 // ─── Round editor modal ──────────────────────────────────────────────────────
 
 interface RoundEditorProps {
@@ -61,12 +71,12 @@ function RoundEditor({ initial, onSave, onCancel }: RoundEditorProps) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Words <span className="text-gray-400 font-normal">(one per line)</span>
+            Words <span className="text-gray-400 font-normal">(one per line — optionally prefix with key letter)</span>
           </label>
           <textarea
             value={wordsText}
             onChange={e => setWordsText(e.target.value)}
-            placeholder={"Cat\nDog\nElephant\nGiraffe"}
+            placeholder={"B - Plumber\nG - Gnome\nK - Knight\n\nor just:\nElephant\nGiraffe"}
             rows={8}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
           />
@@ -168,18 +178,26 @@ function ControlTab({ state, onAction }: ControlTabProps) {
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             {round ? (
               <div className="flex flex-wrap gap-2 pt-1">
-                {round.words.map(word => {
+                {round.words.map(raw => {
+                  const { letter, word } = parseWord(raw);
                   const isActive = state.status === 'active' && state.currentWord === word;
                   return (
                     <button
-                      key={word}
+                      key={raw}
                       onClick={() => showWord(word)}
-                      className={`px-4 py-2.5 rounded-xl font-medium text-base transition-colors ${
+                      className={`px-4 py-2.5 rounded-xl font-medium text-base transition-colors flex items-center gap-2 ${
                         isActive
                           ? 'bg-indigo-600 text-white shadow-md'
                           : 'bg-white border-2 border-gray-200 text-gray-800 active:bg-indigo-50 active:border-indigo-300'
                       }`}
                     >
+                      {letter && (
+                        <span className={`text-xs font-black px-1.5 py-0.5 rounded ${
+                          isActive ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {letter}
+                        </span>
+                      )}
                       {word}
                     </button>
                   );

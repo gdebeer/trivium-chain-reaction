@@ -257,6 +257,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
             const cells = Array.from({ length: 9 }, (_, i) => starred[i]?.letter ?? null);
             return (
               <div className="px-4 pb-4 flex-shrink-0 space-y-2">
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Board Setup</p>
                 {starred.length > 0 && (
                   <div className="grid grid-cols-3 gap-1.5" style={{ width: 'fit-content' }}>
                     {cells.map((letter, i) => (

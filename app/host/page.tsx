@@ -121,6 +121,24 @@ function ControlTab({ state, onAction }: ControlTabProps) {
 
   const round = state.rounds.find(r => r.id === activeRound);
 
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === ' ') {
+        e.preventDefault();
+        showWaiting();
+        return;
+      }
+      const key = e.key.toUpperCase();
+      if (key.length === 1 && /[A-Z]/.test(key) && round) {
+        const match = round.words.find(raw => parseWord(raw).letter === key);
+        if (match) showWord(parseWord(match).word);
+      }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [round, showWord, showWaiting]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Status bar */}

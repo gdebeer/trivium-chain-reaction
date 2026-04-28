@@ -5,8 +5,13 @@ import type { GameState } from '@/lib/types';
 
 // Strip any "B - " letter prefix so the participant never sees it
 function displayWord(raw: string): string {
-  const match = raw.match(/^[A-Za-z]\s*[-:]\s*(.+)$/);
-  return match ? match[1].trim() : raw;
+  const t = raw.trim();
+  if (t.length >= 3 && /[A-Za-z]/.test(t[0])) {
+    if (t[1] === ' ' && t[2] === '-' && t[3] === ' ') return t.slice(4);
+    if (t[1] === ':' && t[2] === ' ')                  return t.slice(3);
+    if (t[1] === '-' && t[2] === ' ')                  return t.slice(3);
+  }
+  return t;
 }
 
 export default function DisplayPage() {

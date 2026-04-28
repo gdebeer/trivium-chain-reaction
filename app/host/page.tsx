@@ -19,9 +19,13 @@ async function sendAction(body: object): Promise<GameState> {
 // Supports optional "B - Plumber" format. Returns letter (for host display)
 // and word (sent to participants). Plain words with no letter prefix also work.
 function parseWord(raw: string): { letter: string | null; word: string } {
-  const match = raw.match(/^([A-Za-z])\s*[-:]\s*(.+)$/);
-  if (match) return { letter: match[1].toUpperCase(), word: match[2].trim() };
-  return { letter: null, word: raw.trim() };
+  const t = raw.trim();
+  if (t.length >= 3 && /[A-Za-z]/.test(t[0])) {
+    if (t[1] === ' ' && t[2] === '-' && t[3] === ' ') return { letter: t[0].toUpperCase(), word: t.slice(4) };
+    if (t[1] === ':' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3) };
+    if (t[1] === '-' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3) };
+  }
+  return { letter: null, word: t };
 }
 
 // ─── Round editor modal ──────────────────────────────────────────────────────

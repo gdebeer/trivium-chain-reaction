@@ -263,7 +263,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
                     −
                   </button>
                   <div className="flex flex-col items-center min-w-0">
-                    <span className={`text-xs font-black uppercase tracking-widest ${textColor}`}>{label}</span>
+                    <span className={`text-4xl font-black uppercase ${textColor}`}>{label}</span>
                     <span className={`text-3xl font-black ${textColor} leading-none`}>{scores[team]}</span>
                   </div>
                   <button

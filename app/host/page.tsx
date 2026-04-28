@@ -258,11 +258,11 @@ function ControlTab({ state, onAction }: ControlTabProps) {
             return (
               <div className="px-4 pb-4 flex-shrink-0 space-y-2">
                 {starred.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5" style={{ width: 'fit-content' }}>
                     {cells.map((letter, i) => (
                       <div
                         key={i}
-                        className={`aspect-square flex items-center justify-center rounded-xl font-black text-3xl transition-colors ${
+                        className={`w-9 h-9 flex items-center justify-center rounded-lg font-black text-base transition-colors ${
                           letter
                             ? isActive(letter)
                               ? 'bg-indigo-600 text-white'

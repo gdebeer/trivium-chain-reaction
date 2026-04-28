@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import type { GameState } from '@/lib/types';
 
+// Strip any "B - " letter prefix so the participant never sees it
+function displayWord(raw: string): string {
+  const match = raw.match(/^[A-Za-z]\s*[-:]\s*(.+)$/);
+  return match ? match[1].trim() : raw;
+}
+
 export default function DisplayPage() {
   const [state, setState] = useState<GameState | null>(null);
   const [animKey, setAnimKey] = useState(0);
@@ -58,7 +64,7 @@ export default function DisplayPage() {
             className="text-white font-black leading-none break-words"
             style={{ fontSize: 'clamp(3rem, 14vw, 9rem)' }}
           >
-            {state.currentWord}
+            {displayWord(state.currentWord)}
           </p>
         )}
       </div>

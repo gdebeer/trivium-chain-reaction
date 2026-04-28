@@ -110,6 +110,9 @@ function ControlTab({ state, onAction }: ControlTabProps) {
   const [activeRound, setActiveRound] = useState<string | null>(
     state.rounds[0]?.id ?? null
   );
+  const [scores, setScores] = useState({ x: 0, o: 0 });
+  const adjust = (team: 'x' | 'o', delta: number) =>
+    setScores(s => ({ ...s, [team]: Math.max(0, s[team] + delta) }));
 
   const showWord = useCallback(async (word: string) => {
     const next = await sendAction({ type: 'SHOW_WORD', word });
@@ -243,6 +246,41 @@ function ControlTab({ state, onAction }: ControlTabProps) {
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Scoring */}
+          <div className="px-4 pb-3 flex-shrink-0">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Score</p>
+            <div className="flex gap-3 mb-2">
+              {([['x', 'X', 'text-orange-600', 'bg-orange-600', 'border-orange-200'],
+                 ['o', 'O', 'text-sky-400',    'bg-sky-400',    'border-sky-200'  ]] as const).map(
+                ([team, label, textColor, bgColor, borderColor]) => (
+                <div key={team} className={`flex-1 border-2 ${borderColor} rounded-2xl px-3 py-2.5 flex items-center justify-between gap-2`}>
+                  <button
+                    onClick={() => adjust(team, -1)}
+                    className="w-9 h-9 rounded-xl bg-gray-100 text-gray-600 font-bold text-lg flex items-center justify-center active:bg-gray-200 flex-shrink-0"
+                  >
+                    −
+                  </button>
+                  <div className="flex flex-col items-center min-w-0">
+                    <span className={`text-xs font-black uppercase tracking-widest ${textColor}`}>{label}</span>
+                    <span className={`text-3xl font-black ${textColor} leading-none`}>{scores[team]}</span>
+                  </div>
+                  <button
+                    onClick={() => adjust(team, 1)}
+                    className={`w-9 h-9 rounded-xl ${bgColor} text-white font-bold text-lg flex items-center justify-center active:opacity-80 flex-shrink-0`}
+                  >
+                    +
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setScores({ x: 0, o: 0 })}
+              className="w-full py-2 rounded-xl border border-gray-200 text-gray-400 text-sm font-medium active:bg-gray-50"
+            >
+              Reset Scores
+            </button>
           </div>
 
           {/* Letter grid */}

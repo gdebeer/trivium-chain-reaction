@@ -4,7 +4,9 @@ import type { GameAction } from '@/lib/types';
 
 export async function GET() {
   const state = await getState();
-  return NextResponse.json(state);
+  return NextResponse.json(state, {
+    headers: { 'Cache-Control': 's-maxage=1, stale-while-revalidate=1' },
+  });
 }
 
 export async function POST(request: NextRequest) {

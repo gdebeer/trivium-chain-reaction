@@ -14,4 +14,5 @@ export type GameAction =
   | { type: 'SHOW_WORD'; word: string }
   | { type: 'SHOW_WAITING' }
   | { type: 'SAVE_ROUND'; round: Partial<Round> & { name: string; words: string[] } }
-  | { type: 'DELETE_ROUND'; id: string };
+  | { type: 'DELETE_ROUND'; id: string }
+  | { type: 'REORDER_ROUNDS'; ids: string[] };

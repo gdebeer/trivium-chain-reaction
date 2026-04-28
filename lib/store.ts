@@ -53,6 +53,12 @@ export async function applyAction(action: GameAction): Promise<GameState> {
     case 'DELETE_ROUND':
       next = { ...state, rounds: state.rounds.filter(r => r.id !== action.id) };
       break;
+    case 'REORDER_ROUNDS': {
+      const lookup = new Map(state.rounds.map(r => [r.id, r]));
+      const reordered = action.ids.map(id => lookup.get(id)).filter(Boolean) as typeof state.rounds;
+      next = { ...state, rounds: reordered };
+      break;
+    }
     default:
       next = state;
   }

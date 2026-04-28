@@ -217,6 +217,16 @@ function SetupTab({ state, onAction }: SetupTabProps) {
     onAction(next);
   }
 
+  async function handleMove(id: string, direction: 'up' | 'down') {
+    const idx = state.rounds.findIndex(r => r.id === id);
+    const swap = direction === 'up' ? idx - 1 : idx + 1;
+    if (swap < 0 || swap >= state.rounds.length) return;
+    const ids = state.rounds.map(r => r.id);
+    [ids[idx], ids[swap]] = [ids[swap], ids[idx]];
+    const next = await sendAction({ type: 'REORDER_ROUNDS', ids });
+    onAction(next);
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-4 pb-2">
@@ -227,14 +237,35 @@ function SetupTab({ state, onAction }: SetupTabProps) {
         {state.rounds.length === 0 && (
           <p className="text-gray-400 text-sm py-4 text-center">No rounds yet — add one below.</p>
         )}
-        {state.rounds.map(round => (
-          <div key={round.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-start justify-between gap-3">
-            <div className="min-w-0">
+        {state.rounds.map((round, idx) => (
+          <div key={round.id} className="bg-white border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-2">
+            {/* Reorder buttons */}
+            <div className="flex flex-col gap-0.5 flex-shrink-0">
+              <button
+                onClick={() => handleMove(round.id, 'up')}
+                disabled={idx === 0}
+                className="w-7 h-7 flex items-center justify-center rounded text-gray-400 disabled:opacity-20 active:bg-gray-100"
+                aria-label="Move up"
+              >
+                ▲
+              </button>
+              <button
+                onClick={() => handleMove(round.id, 'down')}
+                disabled={idx === state.rounds.length - 1}
+                className="w-7 h-7 flex items-center justify-center rounded text-gray-400 disabled:opacity-20 active:bg-gray-100"
+                aria-label="Move down"
+              >
+                ▼
+              </button>
+            </div>
+
+            <div className="min-w-0 flex-1">
               <p className="font-semibold text-gray-900 text-sm">{round.name}</p>
               <p className="text-gray-400 text-xs mt-0.5 truncate">
                 {round.words.join(' · ')}
               </p>
             </div>
+
             <div className="flex gap-2 flex-shrink-0">
               <button
                 onClick={() => setEditing(round)}

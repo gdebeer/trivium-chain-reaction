@@ -346,11 +346,71 @@ function SetupTab({ state, onAction }: SetupTabProps) {
 
 // ─── Host page ────────────────────────────────────────────────────────────────
 
+// ─── Help modal ───────────────────────────────────────────────────────────────
+
+function HelpModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onClose}>
+      <div
+        className="w-full bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto space-y-5 max-w-lg mx-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">How to use</h2>
+          <button onClick={onClose} className="text-gray-400 text-2xl leading-none">×</button>
+        </div>
+
+        <section className="space-y-1.5">
+          <h3 className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">⚙️ Setup</h3>
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li>Tap <strong>Setup</strong> to add, edit, or reorder rounds.</li>
+            <li>Each round has a name and a list of words — one per line.</li>
+            <li>To assign a key letter to a word, prefix it with the letter and a dash:<br/>
+              <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">B - Plumber</code>
+              <span className="text-gray-500 text-xs ml-2">→ shows as <strong>B</strong> Plumber on this screen</span>
+            </li>
+            <li>Use <strong>▲ ▼</strong> to reorder rounds without changing their content.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-1.5">
+          <h3 className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">🎮 Control</h3>
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li>Tap any word button to show it on the participant display.</li>
+            <li>The active word is highlighted in purple — tap another to switch.</li>
+            <li>Use the round tabs to switch between rounds.</li>
+            <li>Tap <strong>Show Waiting Screen</strong> between rounds to hide the current word.</li>
+          </ul>
+        </section>
+
+        <section className="space-y-1.5">
+          <h3 className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">⌨️ Keyboard shortcuts</h3>
+          <ul className="text-sm text-gray-700 space-y-2">
+            <li>Press a <strong>letter key</strong> to instantly select the matching word in the active round.</li>
+            <li>Press <strong>Space</strong> to show the waiting screen.</li>
+            <li>Shortcuts are ignored when typing in a text field.</li>
+          </ul>
+        </section>
+
+        <button
+          onClick={onClose}
+          className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-3 text-sm active:bg-indigo-700"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Host page ────────────────────────────────────────────────────────────────
+
 type Tab = 'control' | 'setup';
 
 export default function HostPage() {
   const [state, setState] = useState<GameState | null>(null);
   const [tab, setTab] = useState<Tab>('control');
+  const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
     fetch('/api/game')
@@ -371,15 +431,26 @@ export default function HostPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <h1 className="font-bold text-gray-900 text-base">Chain Reaction</h1>
-        <a
-          href="/display"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-indigo-600 font-medium"
-        >
-          Display ↗
-        </a>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowHelp(true)}
+            className="w-7 h-7 rounded-full border-2 border-gray-300 text-gray-500 text-sm font-bold flex items-center justify-center active:bg-gray-100"
+            aria-label="Help"
+          >
+            ?
+          </button>
+          <a
+            href="/display"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-indigo-600 font-medium"
+          >
+            Display ↗
+          </a>
+        </div>
       </header>
+
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
       {/* Content */}
       <main className="flex-1 overflow-hidden flex flex-col">

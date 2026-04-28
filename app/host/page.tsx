@@ -18,14 +18,16 @@ async function sendAction(body: object): Promise<GameState> {
 
 // Supports optional "B - Plumber" format. Returns letter (for host display)
 // and word (sent to participants). Plain words with no letter prefix also work.
-function parseWord(raw: string): { letter: string | null; word: string } {
-  const t = raw.trim();
+function parseWord(raw: string): { letter: string | null; word: string; starred: boolean } {
+  let t = raw.trim();
+  const starred = t.startsWith('*');
+  if (starred) t = t.slice(1).trim();
   if (t.length >= 3 && /[A-Za-z]/.test(t[0])) {
-    if (t[1] === ' ' && t[2] === '-' && t[3] === ' ') return { letter: t[0].toUpperCase(), word: t.slice(4) };
-    if (t[1] === ':' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3) };
-    if (t[1] === '-' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3) };
+    if (t[1] === ' ' && t[2] === '-' && t[3] === ' ') return { letter: t[0].toUpperCase(), word: t.slice(4), starred };
+    if (t[1] === ':' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3), starred };
+    if (t[1] === '-' && t[2] === ' ')                  return { letter: t[0].toUpperCase(), word: t.slice(3), starred };
   }
-  return { letter: null, word: t };
+  return { letter: null, word: t, starred };
 }
 
 // ─── Round editor modal ──────────────────────────────────────────────────────
@@ -229,7 +231,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
           </div>
 
           {/* Participant view preview */}
-          <div className="px-4 pb-4 flex-shrink-0">
+          <div className="px-4 pb-3 flex-shrink-0">
             <p className="text-xs text-gray-400 font-medium mb-1.5 uppercase tracking-wide">Participant screen</p>
             <div className="bg-black rounded-2xl h-28 flex items-center justify-center overflow-hidden">
               {state.status === 'waiting' || !state.currentWord ? (
@@ -242,6 +244,56 @@ function ControlTab({ state, onAction }: ControlTabProps) {
               )}
             </div>
           </div>
+
+          {/* Letter grid */}
+          {(() => {
+            const parsed = (round?.words ?? []).map(parseWord);
+            const starred = parsed.filter(p => p.starred && p.letter);
+            const rest    = parsed.filter(p => !p.starred && p.letter);
+            if (starred.length === 0 && rest.length === 0) return null;
+            const activeLetterWord = state.status === 'active' ? state.currentWord : null;
+            const isActive = (letter: string) =>
+              !!activeLetterWord && parsed.some(p => p.letter === letter && p.word === activeLetterWord);
+            const cells = Array.from({ length: 9 }, (_, i) => starred[i]?.letter ?? null);
+            return (
+              <div className="px-4 pb-4 flex-shrink-0 space-y-2">
+                {starred.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {cells.map((letter, i) => (
+                      <div
+                        key={i}
+                        className={`aspect-square flex items-center justify-center rounded-xl font-black text-3xl transition-colors ${
+                          letter
+                            ? isActive(letter)
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-gray-800 text-white'
+                            : 'bg-gray-100'
+                        }`}
+                      >
+                        {letter}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {rest.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {rest.map(({ letter }) => (
+                      <div
+                        key={letter}
+                        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm transition-colors ${
+                          isActive(letter!)
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        {letter}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>
@@ -383,6 +435,9 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             <li>To assign a key letter to a word, prefix it with the letter and a dash:<br/>
               <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">B - Plumber</code>
               <span className="text-gray-500 text-xs ml-2">→ shows as <strong>B</strong> Plumber on this screen</span>
+            </li>
+            <li>Add <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">*</code> at the start to feature that word in the 3×3 grid (up to 9):<br/>
+              <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-xs font-mono">* B - Plumber</code>
             </li>
             <li>Use <strong>▲ ▼</strong> to reorder rounds without changing their content.</li>
           </ul>

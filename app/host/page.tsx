@@ -197,7 +197,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
                     >
                       {letter && (
                         <span className={`text-xs font-black px-1.5 py-0.5 rounded ${
-                          isActive ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500'
+                          isActive ? 'bg-indigo-500 text-white' : 'bg-gray-800 text-white'
                         }`}>
                           {letter}
                         </span>

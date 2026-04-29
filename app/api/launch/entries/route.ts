@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
-import { getState, addEntry, updateEntry, deleteEntry, markWaveSubmitted } from '@/lib/launch-store';
+import { getState, upsertTeam, markWaveSubmitted, clearTeam } from '@/lib/launch-store';
+import type { TeamColor } from '@/lib/launch-types';
 
 export async function GET() {
   return Response.json(await getState());
@@ -10,15 +11,8 @@ export async function POST(request: NextRequest) {
   if (body.action === 'SUBMIT_WAVE') {
     return Response.json(await markWaveSubmitted(body.wave));
   }
-  return Response.json(await addEntry(body));
-}
-
-export async function PUT(request: NextRequest) {
-  const { id, ...updates } = await request.json();
-  return Response.json(await updateEntry(id, updates));
-}
-
-export async function DELETE(request: NextRequest) {
-  const { id } = await request.json();
-  return Response.json(await deleteEntry(id));
+  if (body.action === 'CLEAR_TEAM') {
+    return Response.json(await clearTeam(body.wave, body.color as TeamColor));
+  }
+  return Response.json(await upsertTeam(body.wave, body.team));
 }

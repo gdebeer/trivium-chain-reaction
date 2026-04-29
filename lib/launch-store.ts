@@ -1,7 +1,6 @@
-import { randomUUID } from 'crypto';
-import type { LaunchState, LaunchEntry } from './launch-types';
+import type { LaunchState, LaunchTeam, TeamColor } from './launch-types';
 
-const DEFAULT_STATE: LaunchState = { entries: [] };
+const DEFAULT_STATE: LaunchState = { waves: [] };
 
 let mem: LaunchState = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
@@ -31,23 +30,35 @@ async function saveState(state: LaunchState): Promise<LaunchState> {
   return state;
 }
 
-export async function addEntry(entry: Omit<LaunchEntry, 'id'>): Promise<LaunchState> {
+export async function upsertTeam(waveNum: 1 | 2 | 3, team: LaunchTeam): Promise<LaunchState> {
   const state = await getState();
-  return saveState({ entries: [...state.entries, { ...entry, id: randomUUID() }] });
+  const existing = state.waves.find(w => w.wave === waveNum);
+  const updatedWave = existing
+    ? { ...existing, teams: { ...existing.teams, [team.color]: team } }
+    : { wave: waveNum, teams: { [team.color]: team } };
+  const waves = existing
+    ? state.waves.map(w => w.wave === waveNum ? updatedWave : w)
+    : [...state.waves, updatedWave];
+  return saveState({ waves });
 }
 
-export async function updateEntry(id: string, updates: Partial<Omit<LaunchEntry, 'id'>>): Promise<LaunchState> {
+export async function markWaveSubmitted(waveNum: 1 | 2 | 3): Promise<LaunchState> {
   const state = await getState();
-  return saveState({ entries: state.entries.map(e => e.id === id ? { ...e, ...updates } : e) });
+  return saveState({
+    waves: state.waves.map(w =>
+      w.wave === waveNum ? { ...w, submittedAt: new Date().toISOString() } : w
+    ),
+  });
 }
 
-export async function deleteEntry(id: string): Promise<LaunchState> {
+export async function clearTeam(waveNum: 1 | 2 | 3, color: TeamColor): Promise<LaunchState> {
   const state = await getState();
-  return saveState({ entries: state.entries.filter(e => e.id !== id) });
-}
-
-export async function markWaveSubmitted(wave: 1 | 2 | 3): Promise<LaunchState> {
-  const state = await getState();
-  const submittedAt = new Date().toISOString();
-  return saveState({ entries: state.entries.map(e => e.wave === wave ? { ...e, submittedAt } : e) });
+  return saveState({
+    waves: state.waves.map(w => {
+      if (w.wave !== waveNum) return w;
+      const teams = { ...w.teams };
+      delete teams[color];
+      return { ...w, teams };
+    }),
+  });
 }

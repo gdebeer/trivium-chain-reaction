@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { LaunchEntry, LaunchState } from '@/lib/launch-types';
-import { launchTotal } from '@/lib/launch-types';
+import type { LaunchState, LaunchTeam, TeamColor } from '@/lib/launch-types';
+import { TEAM_COLORS, TEAM_COLORS_STYLE, launchTeamTotal } from '@/lib/launch-types';
 
 async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
   const res = await fetch(path, {
@@ -15,19 +15,24 @@ async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
   return data as T;
 }
 
-// ─── Entry form ───────────────────────────────────────────────────────────────
+// ─── Team edit form ───────────────────────────────────────────────────────────
 
-function EntryForm({
+function TeamForm({
   wave,
+  color,
   initial,
   onSave,
+  onClear,
   onCancel,
 }: {
   wave: 1 | 2 | 3;
-  initial?: LaunchEntry;
+  color: TeamColor;
+  initial?: LaunchTeam;
   onSave: (s: LaunchState) => void;
+  onClear: (s: LaunchState) => void;
   onCancel: () => void;
 }) {
+  const style = TEAM_COLORS_STYLE[color];
   const [badges, setBadges] = useState<string[]>(
     initial?.badges.length ? [...initial.badges, '', ''].slice(0, 4) : ['', '', '', '']
   );
@@ -37,9 +42,7 @@ function EntryForm({
   const [error, setError] = useState('');
 
   function setBadge(i: number, val: string) {
-    const next = [...badges];
-    next[i] = val;
-    setBadges(next);
+    const next = [...badges]; next[i] = val; setBadges(next);
   }
 
   async function handleSave() {
@@ -47,23 +50,19 @@ function EntryForm({
     if (validBadges.length < 2) { setError('Enter at least 2 badge numbers.'); return; }
     if (!feet) { setError('Enter Round 1 distance.'); return; }
     if (!round2) { setError('Enter Round 2 total score.'); return; }
-    const entry = {
-      wave,
-      badges: validBadges,
-      round1Feet: Number(feet),
-      round2Total: Number(round2),
-    };
-    setSaving(true);
-    setError('');
+    setSaving(true); setError('');
     try {
-      const state = initial
-        ? await api<LaunchState>('/api/launch/entries', 'PUT', { id: initial.id, ...entry })
-        : await api<LaunchState>('/api/launch/entries', 'POST', entry);
-      onSave(state);
+      const team: LaunchTeam = { color, badges: validBadges, round1Feet: Number(feet), round2Total: Number(round2) };
+      onSave(await api<LaunchState>('/api/launch/entries', 'POST', { wave, team }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
       setSaving(false);
     }
+  }
+
+  async function handleClear() {
+    if (!confirm(`Clear ${color} team data for Wave ${wave}?`)) return;
+    onClear(await api<LaunchState>('/api/launch/entries', 'POST', { action: 'CLEAR_TEAM', wave, color }));
   }
 
   const round1Score = feet ? Number(feet) * 5 : null;
@@ -71,14 +70,12 @@ function EntryForm({
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onCancel}>
-      <div
-        className="w-full bg-white rounded-t-2xl max-h-[92vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
+      <div className="w-full bg-white rounded-t-2xl max-h-[92vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="sticky top-0 bg-white px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">
-            {initial ? 'Edit Team' : 'Add Team'} — Wave {wave}
-          </h2>
+          <div className="flex items-center gap-2.5">
+            <span className={`w-4 h-4 rounded-full ${style.dot}`} />
+            <h2 className="text-lg font-bold text-gray-900">{color} Team — Wave {wave}</h2>
+          </div>
           <button onClick={onCancel} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
         </div>
 
@@ -95,8 +92,8 @@ function EntryForm({
                   value={b}
                   onChange={e => setBadge(i, e.target.value)}
                   placeholder={i < 2 ? `Badge ${i + 1}` : `Badge ${i + 1} (optional)`}
-                  className={`border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                    i < 2 ? 'border-gray-300' : 'border-dashed border-gray-300 text-gray-500'
+                  className={`border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 ${style.ring} ${
+                    i < 2 ? `${style.border}` : 'border-dashed border-gray-300 text-gray-500'
                   }`}
                 />
               ))}
@@ -106,7 +103,7 @@ function EntryForm({
           {/* Round 1 */}
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Round 1 — Distance</p>
-            <div className="bg-gray-50 rounded-2xl px-4 py-3 space-y-3">
+            <div className="bg-gray-50 rounded-2xl px-4 py-3 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-base font-medium text-gray-800">Distance (feet)</label>
                 <input
@@ -116,13 +113,11 @@ function EntryForm({
                   onChange={e => setFeet(e.target.value)}
                   min="0"
                   step="0.1"
-                  className="w-28 border border-gray-300 rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-28 border border-gray-300 rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
               {round1Score !== null && (
-                <p className="text-sm text-gray-500 text-right">
-                  = <span className="font-bold text-gray-700">{round1Score} pts</span> (× 5)
-                </p>
+                <p className="text-sm text-gray-500 text-right">= <span className="font-bold text-gray-700">{round1Score} pts</span></p>
               )}
             </div>
           </div>
@@ -139,7 +134,7 @@ function EntryForm({
                   value={round2}
                   onChange={e => setRound2(e.target.value)}
                   min="0"
-                  className="w-28 border border-gray-300 rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-28 border border-gray-300 rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 focus:ring-gray-400"
                 />
               </div>
               <p className="text-xs text-gray-400 mt-2">Outer: 5 · Middle: 10 · Inner: 20 · Bullseye: 100</p>
@@ -148,23 +143,27 @@ function EntryForm({
 
           {/* Total preview */}
           {totalScore !== null && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-orange-700">Total score</span>
-              <span className="text-2xl font-black text-orange-600">{totalScore}</span>
+            <div className={`${style.bg} ${style.border} border rounded-2xl px-4 py-3 flex items-center justify-between`}>
+              <span className={`text-sm font-semibold ${style.text}`}>Total score</span>
+              <span className={`text-2xl font-black ${style.text}`}>{totalScore}</span>
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">{error}</p>}
 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full bg-orange-500 text-white font-semibold rounded-2xl py-4 text-base active:bg-orange-600 disabled:opacity-50"
+            className={`w-full ${style.dot} text-white font-semibold rounded-2xl py-4 text-base disabled:opacity-50 active:opacity-80`}
           >
-            {saving ? 'Saving…' : initial ? 'Save Changes' : 'Add Team'}
+            {saving ? 'Saving…' : 'Save Team'}
           </button>
+
+          {initial && (
+            <button onClick={handleClear} className="w-full py-3 text-sm text-red-500 font-medium active:bg-red-50 rounded-2xl">
+              Clear team data
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -176,7 +175,7 @@ function EntryForm({
 export default function LaunchPage() {
   const [state, setState] = useState<LaunchState | null>(null);
   const [wave, setWave] = useState<1 | 2 | 3>(1);
-  const [editing, setEditing] = useState<LaunchEntry | 'new' | null>(null);
+  const [editingColor, setEditingColor] = useState<TeamColor | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -195,20 +194,15 @@ export default function LaunchPage() {
     );
   }
 
-  const waveEntries = state.entries.filter(e => e.wave === wave);
-  const waveSubmitted = waveEntries.length > 0 && waveEntries.every(e => e.submittedAt);
-
-  async function handleDelete(id: string) {
-    if (!confirm('Remove this team?')) return;
-    setState(await api<LaunchState>('/api/launch/entries', 'DELETE', { id }));
-  }
+  const waveData = state.waves.find(w => w.wave === wave);
+  const teams = waveData?.teams ?? {};
+  const filledCount = Object.keys(teams).length;
+  const waveSubmitted = !!waveData?.submittedAt;
 
   async function handleSubmitWave() {
-    if (waveEntries.length === 0) { setSubmitError(`No teams in Wave ${wave}.`); return; }
-    if (waveSubmitted && !confirm(`Wave ${wave} already submitted. Mark again?`)) return;
-    setSubmitting(true);
-    setSubmitError('');
-    setSubmitMsg('');
+    if (filledCount === 0) { setSubmitError(`No teams entered for Wave ${wave}.`); return; }
+    if (waveSubmitted && !confirm(`Wave ${wave} already saved. Save again?`)) return;
+    setSubmitting(true); setSubmitError(''); setSubmitMsg('');
     try {
       setState(await api<LaunchState>('/api/launch/entries', 'POST', { action: 'SUBMIT_WAVE', wave }));
       setSubmitMsg(`Wave ${wave} scores saved!`);
@@ -219,7 +213,10 @@ export default function LaunchPage() {
     }
   }
 
-  const waveCount = (w: number) => state.entries.filter(e => e.wave === w).length;
+  const waveCount = (w: number) => {
+    const wd = state.waves.find(wv => wv.wave === w);
+    return wd ? Object.keys(wd.teams).length : 0;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
@@ -247,90 +244,94 @@ export default function LaunchPage() {
             >
               Wave {w}
               {count > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                  wave === w ? 'bg-white/25 text-white' : 'bg-gray-300 text-gray-600'
-                }`}>{count}</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${wave === w ? 'bg-white/25 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                  {count}/5
+                </span>
               )}
             </button>
           );
         })}
       </div>
 
-      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-36 space-y-3">
-        {waveEntries.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <p className="text-5xl mb-3">🚀</p>
-            <p className="text-gray-500 text-sm font-medium">No teams in Wave {wave} yet.</p>
-            <p className="text-gray-400 text-xs mt-1">Tap Add Team to record scores.</p>
-          </div>
-        ) : (
-          waveEntries.map(entry => {
-            const total = launchTotal(entry);
-            return (
-              <div key={entry.id} className="bg-white rounded-2xl border border-gray-200 px-4 py-4">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {entry.badges.map(b => (
-                      <span key={b} className="bg-orange-100 text-orange-700 text-sm font-bold px-2.5 py-1 rounded-lg font-mono">#{b}</span>
-                    ))}
-                    {entry.submittedAt && (
-                      <span className="text-xs text-emerald-600 bg-emerald-50 font-semibold px-2.5 py-1 rounded-lg">✓ Saved</span>
-                    )}
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => setEditing(entry)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 active:bg-gray-100">✏️</button>
-                    <button onClick={() => handleDelete(entry.id)} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 active:bg-red-50">🗑️</button>
-                  </div>
-                </div>
+      {/* Team cards */}
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-36 space-y-2.5">
+        {TEAM_COLORS.map(color => {
+          const team = teams[color];
+          const style = TEAM_COLORS_STYLE[color];
+          const total = team ? launchTeamTotal(team) : null;
 
-                <div className="flex gap-2">
-                  <div className="flex-1 bg-gray-50 rounded-xl py-2.5 px-3">
-                    <p className="text-xs text-gray-400 mb-0.5">Round 1</p>
-                    <p className="text-sm font-semibold text-gray-700">{entry.round1Feet} ft</p>
-                    <p className="text-base font-bold text-gray-800">{entry.round1Feet * 5} pts</p>
-                  </div>
-                  <div className="flex-1 bg-gray-50 rounded-xl py-2.5 px-3">
-                    <p className="text-xs text-gray-400 mb-0.5">Round 2</p>
-                    <p className="text-base font-bold text-gray-800">{entry.round2Total} pts</p>
-                  </div>
-                  <div className="flex-1 bg-orange-50 rounded-xl py-2.5 px-3 border border-orange-200">
-                    <p className="text-xs text-orange-500 mb-0.5">Total</p>
-                    <p className="text-xl font-black text-orange-600">{total}</p>
-                  </div>
+          return (
+            <button
+              key={color}
+              onClick={() => setEditingColor(color)}
+              className={`w-full text-left rounded-2xl border-2 px-4 py-4 transition-colors ${
+                team ? `${style.bg} ${style.border}` : 'bg-white border-gray-200 active:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-3.5 h-3.5 rounded-full flex-shrink-0 ${style.dot}`} />
+                  <span className={`font-bold text-base ${team ? style.text : 'text-gray-400'}`}>
+                    {color}
+                  </span>
+                  {team && (
+                    <div className="flex flex-wrap gap-1 ml-1">
+                      {team.badges.map(b => (
+                        <span key={b} className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-md ${style.bg} ${style.text}`}>
+                          #{b}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                {total !== null ? (
+                  <span className={`text-xl font-black ${style.text}`}>{total}</span>
+                ) : (
+                  <span className="text-sm text-gray-400 font-medium">Tap to enter →</span>
+                )}
               </div>
-            );
-          })
-        )}
 
-        <button
-          onClick={() => setEditing('new')}
-          className="w-full border-2 border-dashed border-gray-300 rounded-2xl py-4 text-gray-500 font-semibold text-sm active:border-orange-400 active:text-orange-600 transition-colors"
-        >
-          + Add Team
-        </button>
+              {team && (
+                <div className="flex gap-2 mt-2.5">
+                  <div className="flex-1 bg-white/60 rounded-xl py-2 px-3">
+                    <p className="text-xs text-gray-500 leading-none mb-0.5">Round 1</p>
+                    <p className="text-sm font-semibold text-gray-700">{team.round1Feet} ft → {team.round1Feet * 5} pts</p>
+                  </div>
+                  <div className="flex-1 bg-white/60 rounded-xl py-2 px-3">
+                    <p className="text-xs text-gray-500 leading-none mb-0.5">Round 2</p>
+                    <p className="text-sm font-semibold text-gray-700">{team.round2Total} pts</p>
+                  </div>
+                </div>
+              )}
+            </button>
+          );
+        })}
       </main>
 
+      {/* Submit footer */}
       <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
         {submitMsg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5 mb-2 text-center font-medium">{submitMsg}</p>}
         {submitError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5 mb-2 text-center">{submitError}</p>}
         <button
           onClick={handleSubmitWave}
-          disabled={submitting || waveEntries.length === 0}
+          disabled={submitting || filledCount === 0}
           className={`w-full rounded-2xl py-4 font-bold text-base transition-colors disabled:opacity-40 ${
             waveSubmitted ? 'bg-emerald-600 text-white active:bg-emerald-700' : 'bg-orange-500 text-white active:bg-orange-600'
           }`}
         >
           {submitting ? 'Saving…' : waveSubmitted ? `Resave Wave ${wave}` : `Save Wave ${wave} Scores`}
+          {filledCount > 0 && !submitting && <span className="ml-2 opacity-75 font-normal text-sm">({filledCount}/5 teams)</span>}
         </button>
       </div>
 
-      {editing !== null && (
-        <EntryForm
+      {editingColor && (
+        <TeamForm
           wave={wave}
-          initial={editing !== 'new' ? editing : undefined}
-          onSave={s => { setState(s); setEditing(null); }}
-          onCancel={() => setEditing(null)}
+          color={editingColor}
+          initial={teams[editingColor]}
+          onSave={s => { setState(s); setEditingColor(null); }}
+          onClear={s => { setState(s); setEditingColor(null); }}
+          onCancel={() => setEditingColor(null)}
         />
       )}
     </div>

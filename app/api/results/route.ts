@@ -1,7 +1,7 @@
 import { getState as getPGRState } from '@/lib/pgr-store';
 import { getState as getLaunchState } from '@/lib/launch-store';
 import { getState as getTTTState } from '@/lib/ttt-store';
-import { launchTotal } from '@/lib/launch-types';
+import { launchTeamTotal } from '@/lib/launch-types';
 
 const PGR_MAX = 24;
 
@@ -51,10 +51,13 @@ export async function GET(): Promise<Response> {
 
   // Launch: each badge gets their team's total score
   const launchMap = new Map<string, number>();
-  for (const entry of launch.entries) {
-    const total = launchTotal(entry);
-    for (const badge of entry.badges) {
-      if (!launchMap.has(badge)) launchMap.set(badge, total);
+  for (const wave of launch.waves) {
+    for (const team of Object.values(wave.teams)) {
+      if (!team) continue;
+      const total = launchTeamTotal(team);
+      for (const badge of team.badges) {
+        if (!launchMap.has(badge)) launchMap.set(badge, total);
+      }
     }
   }
 

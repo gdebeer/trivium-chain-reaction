@@ -2,6 +2,33 @@
 
 import { useState } from 'react';
 
+function CatapultIceCream() {
+  return (
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+      {/* Chassis */}
+      <rect x="2" y="27" width="21" height="3" rx="1.5" fill="#c2410c" />
+      {/* Wheels */}
+      <circle cx="7"  cy="32" r="2.5" stroke="#c2410c" strokeWidth="1.5" />
+      <circle cx="18" cy="32" r="2.5" stroke="#c2410c" strokeWidth="1.5" />
+      {/* Arm — raised after launch, pointing upper-left */}
+      <line x1="21" y1="28" x2="8" y2="11" stroke="#c2410c" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Pivot knuckle */}
+      <circle cx="15" cy="21" r="2.5" fill="#c2410c" />
+      {/* Trajectory dots */}
+      <circle cx="15" cy="6"  r="1.2" fill="#fb923c" opacity="0.5" />
+      <circle cx="21" cy="4"  r="1.2" fill="#fb923c" opacity="0.6" />
+      <circle cx="26" cy="4"  r="1.2" fill="#fb923c" opacity="0.7" />
+      {/* Ice cream cone (flying upper-right) */}
+      {/* Cone */}
+      <polygon points="27,14 33,14 30,20" fill="#f97316" />
+      {/* Scoop — pink */}
+      <circle cx="30" cy="10" r="5" fill="#fb7185" />
+      {/* Scoop highlight */}
+      <circle cx="28" cy="8"  r="1.5" fill="white" opacity="0.35" />
+    </svg>
+  );
+}
+
 function TicTacBoard() {
   return (
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
@@ -49,7 +76,7 @@ const STATIONS: Station[] = [
   },
   {
     href: '/launch',
-    icon: <span className="text-3xl">🚀</span>,
+    icon: <CatapultIceCream />,
     name: '3-2-1 Launch',
     card: 'border-orange-200 active:bg-orange-50',
     text: 'text-orange-700',

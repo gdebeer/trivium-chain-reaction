@@ -5,6 +5,14 @@ import type { BadgeResult, ResultsPayload } from '@/app/api/results/route';
 import { BADGE_NAMES } from '@/lib/badge-list';
 
 type View = 'scaled' | 'raw';
+type Sort = 'rank' | 'name';
+
+function lastName(badge: string): string {
+  const name = BADGE_NAMES[badge];
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1].toLowerCase();
+}
 
 function fmt(n: number | null) {
   if (n === null) return '—';
@@ -34,6 +42,7 @@ export default function ResultsPage() {
   const [showAll, setShowAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<View>('scaled');
+  const [sort, setSort] = useState<Sort>('rank');
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
@@ -56,8 +65,14 @@ export default function ResultsPage() {
   }
 
   const { results, meta } = data;
-  const displayed = showAll ? results : results.slice(0, 5);
   const hasAnyData = results.length > 0;
+
+  // Stamp rank from the API-sorted order, then optionally re-sort for display
+  const rankedResults = results.map((r, i) => ({ ...r, rank: i + 1 }));
+  const sorted = sort === 'name'
+    ? [...rankedResults].sort((a, b) => lastName(a.badge).localeCompare(lastName(b.badge)))
+    : rankedResults;
+  const displayed = showAll ? sorted : sorted.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col w-full max-w-2xl mx-auto pb-12">
@@ -86,6 +101,21 @@ export default function ResultsPage() {
               }`}
             >
               {v === 'scaled' ? 'Scaled (ranked)' : 'Raw scores'}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort toggle */}
+        <div className="flex mt-2 bg-gray-900 rounded-xl p-1 gap-1">
+          {(['rank', 'name'] as Sort[]).map(s => (
+            <button
+              key={s}
+              onClick={() => setSort(s)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                sort === s ? 'bg-gray-600 text-white' : 'text-gray-500 active:text-gray-400'
+              }`}
+            >
+              {s === 'rank' ? 'By rank' : 'By last name'}
             </button>
           ))}
         </div>
@@ -121,8 +151,8 @@ export default function ResultsPage() {
           </div>
         ) : (
           <>
-            {displayed.map((r, i) => {
-              const rank = i + 1;
+            {displayed.map((r) => {
+              const rank = r.rank;
               const isTop3 = rank <= 3;
 
               const rankBg =

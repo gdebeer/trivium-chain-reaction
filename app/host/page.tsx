@@ -741,9 +741,9 @@ export default function HostPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <a href="/" className="text-gray-400 text-sm font-medium hover:text-indigo-500 transition-colors" aria-label="Home">←</a>
-          <h1 className="font-bold text-gray-900 text-base">Tic Tac Talk</h1>
+        <div>
+          <a href="/" className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5 block hover:text-purple-500 transition-colors">← Next View 2026</a>
+          <h1 className="font-bold text-gray-900 text-lg leading-none">Tic Tac Talk</h1>
         </div>
         <div className="flex items-center gap-3">
           <button

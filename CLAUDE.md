@@ -34,7 +34,16 @@ Participant display for TTT: `/display`
 ## Badge Numbers
 
 ### Where the list lives
-`lib/badge-list.ts` → `VALID_BADGE_SET` (a `Set<string>`). To update the list, replace the contents of that set. **The rules below apply automatically — no other code needs to change.**
+`lib/badge-list.ts` — **the only file that needs editing when the roster changes.**
+
+- `BADGE_NAMES` (top of file) — maps badge number → participant full name. Used on the results leaderboard.
+- `VALID_BADGE_SET` (just below) — the set of all valid badge numbers. Used for validation warnings across all stations.
+
+**When the user pastes a new roster (Name + Badge Number table):**
+1. Replace all entries in `BADGE_NAMES` with the new name → badge mapping.
+2. Replace all entries in `VALID_BADGE_SET` with the new badge numbers.
+3. The three digit-rules (wave routing, Launch team, TTT team) apply automatically — no other code changes needed.
+4. Commit and push.
 
 ### Sorting rules (applied automatically from the badge number alone)
 
@@ -104,7 +113,7 @@ lib/
 app/
   pgr/page.tsx        — PGR scorekeeper UI
   launch/page.tsx     — Launch scorekeeper UI (TeamRow + BadgeModal)
-  host/page.tsx       — TTT host (ControlTab + SetupTab + SubmitTab)
+  host/page.tsx       — TTT host (ControlTab + SetupTab; wave select + scoring in ControlTab)
   display/page.tsx    — TTT participant display
   results/page.tsx    — Unified leaderboard
 

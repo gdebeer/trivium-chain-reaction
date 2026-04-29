@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import type { UsedBadges } from '@/app/api/badges/route';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
 
@@ -536,12 +538,17 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
   const [wave, setWave] = useState<1 | 2 | 3>(1);
   const [xBadges, setXBadges] = useState(['', '', '', '', '', '', '', '']);
   const [oBadges, setOBadges] = useState(['', '', '', '', '', '', '', '']);
+  const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    tttApi<TTTState>('/api/ttt/waves').then(s => {
+    Promise.all([
+      tttApi<TTTState>('/api/ttt/waves'),
+      fetch('/api/badges').then(r => r.json()),
+    ]).then(([s, d]) => {
+      const badges = d as UsedBadges;
       setTttState(s);
       const existing = s.waves.find(w => w.wave === wave);
       if (existing) {
@@ -549,6 +556,12 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
         setXBadges(pad(existing.xBadges));
         setOBadges(pad(existing.oBadges));
       }
+      // Exclude this wave's own badges so editing doesn't self-flag
+      const ownBadges = new Set([
+        ...(existing?.xBadges ?? []),
+        ...(existing?.oBadges ?? []),
+      ]);
+      setUsedInStation(new Set(badges.ttt.filter(b => !ownBadges.has(b))));
     });
   }, [wave]);
 
@@ -579,9 +592,19 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
   }
 
   const currentWaveData = tttState?.waves.find(w => w.wave === wave);
+
+  // Badge validation — warnings only, never block saving
+  const allBadgesInWave = [...xBadges, ...oBadges];
+  const xStatuses = xBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
+  const oStatuses = oBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
+  const xWarnings = badgeWarnings(xBadges, xStatuses);
+  const oWarnings = badgeWarnings(oBadges, oStatuses);
+
   const badgeInputs = (team: 'x' | 'o') => {
     const badges = team === 'x' ? xBadges : oBadges;
-    const color = team === 'x' ? 'ring-orange-500 border-orange-300' : 'ring-sky-500 border-sky-300';
+    const statuses = team === 'x' ? xStatuses : oStatuses;
+    const warnings = team === 'x' ? xWarnings : oWarnings;
+    const ringColor = team === 'x' ? 'ring-orange-500' : 'ring-sky-500';
     const label = team === 'x' ? 'Team X' : 'Team O';
     const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
     const score = team === 'x' ? gameScores.x : gameScores.o;
@@ -600,10 +623,23 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
               value={b}
               onChange={e => setBadge(team, i, e.target.value)}
               placeholder={`#${i + 1}`}
-              className={`border rounded-xl px-2 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${color} ${i >= 4 ? 'border-dashed opacity-60' : ''}`}
+              className={`border rounded-xl px-2 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${ringColor} ${
+                i >= 4 && statuses[i] === 'empty'
+                  ? 'border-dashed border-gray-300 opacity-60'
+                  : BADGE_INPUT_CLASS[statuses[i]]
+              }`}
             />
           ))}
         </div>
+        {warnings.length > 0 && (
+          <ul className="space-y-0.5">
+            {warnings.map(w => (
+              <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
+                <span>⚠</span><span>{w}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   };

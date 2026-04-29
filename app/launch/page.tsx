@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { LaunchState, LaunchTeam, TeamColor } from '@/lib/launch-types';
 import { TEAM_COLORS, TEAM_COLORS_STYLE, launchTeamTotal } from '@/lib/launch-types';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import type { UsedBadges } from '@/app/api/badges/route';
 
 async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
   const res = await fetch(path, {
@@ -33,10 +35,23 @@ function BadgeModal({
   const style = TEAM_COLORS_STYLE[color];
   const [badges, setBadges] = useState<string[]>([...initial, '', '', '', ''].slice(0, 4));
   const [saving, setSaving] = useState(false);
+  const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch('/api/badges')
+      .then(r => r.json())
+      .then((d: UsedBadges) => {
+        const own = new Set(initial);
+        setUsedInStation(new Set(d.launch.filter(b => !own.has(b))));
+      });
+  }, [initial]);
 
   function setBadge(i: number, val: string) {
     const next = [...badges]; next[i] = val; setBadges(next);
   }
+
+  const badgeStatuses = badges.map(b => getBadgeStatus(b, badges, usedInStation));
+  const warnings = badgeWarnings(badges, badgeStatuses);
 
   async function handleSave() {
     const valid = badges.map(b => b.trim()).filter(Boolean);
@@ -71,11 +86,22 @@ function BadgeModal({
               onChange={e => setBadge(i, e.target.value)}
               placeholder={i < 2 ? `Badge ${i + 1}` : `Badge ${i + 1} (optional)`}
               className={`border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 ${style.ring} ${
-                i < 2 ? style.border : 'border-dashed border-gray-300 text-gray-500'
+                i >= 2 && badgeStatuses[i] === 'empty'
+                  ? 'border-dashed border-gray-300 text-gray-500'
+                  : BADGE_INPUT_CLASS[badgeStatuses[i]]
               }`}
             />
           ))}
         </div>
+        {warnings.length > 0 && (
+          <ul className="mt-1 space-y-0.5">
+            {warnings.map(w => (
+              <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
+                <span>⚠</span><span>{w}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <button
           onClick={handleSave}

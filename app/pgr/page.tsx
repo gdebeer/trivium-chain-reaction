@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { PGREntry, PGRState } from '@/lib/pgr-types';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import type { UsedBadges } from '@/app/api/badges/route';
 
 // ─── API helper ───────────────────────────────────────────────────────────────
 
@@ -39,6 +41,21 @@ function EntryForm({
   const [order, setOrder] = useState(initial?.order?.toString() ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch('/api/badges')
+      .then(r => r.json())
+      .then((d: UsedBadges) => {
+        // Exclude this entry's own badges so they don't flag as duplicates
+        const own = new Set(initial?.badges ?? []);
+        setUsedInStation(new Set(d.pgr.filter(b => !own.has(b))));
+      });
+  }, [initial]);
+
+  const formBadges = [b0, b1, b2];
+  const badgeStatuses = formBadges.map(b => getBadgeStatus(b, formBadges, usedInStation));
+  const warnings = badgeWarnings(formBadges, badgeStatuses);
 
   async function handleSave() {
     const badges = [b0, b1, b2].map(s => s.trim()).filter(Boolean);
@@ -87,24 +104,35 @@ function EntryForm({
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Badge Numbers</p>
             <div className="flex gap-2">
-              {[
+              {([
                 [b0, setB0, 'Badge 1', false],
                 [b1, setB1, 'Badge 2', false],
                 [b2, setB2, 'Badge 3', true],
-              ].map(([val, setter, placeholder, optional]) => (
+              ] as [string, (v: string) => void, string, boolean][]).map(([val, setter, placeholder, optional], i) => (
                 <input
-                  key={placeholder as string}
+                  key={placeholder}
                   type="text"
                   inputMode="numeric"
-                  value={val as string}
-                  onChange={e => (setter as (v: string) => void)(e.target.value)}
-                  placeholder={placeholder as string}
+                  value={val}
+                  onChange={e => setter(e.target.value)}
+                  placeholder={placeholder}
                   className={`flex-1 min-w-0 border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                    optional ? 'border-dashed border-gray-300 text-gray-500' : 'border-gray-300'
+                    optional && badgeStatuses[i] === 'empty'
+                      ? 'border-dashed border-gray-300 text-gray-500'
+                      : BADGE_INPUT_CLASS[badgeStatuses[i]]
                   }`}
                 />
               ))}
             </div>
+            {warnings.length > 0 && (
+              <ul className="mt-2 space-y-0.5">
+                {warnings.map(w => (
+                  <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
+                    <span>⚠</span><span>{w}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="text-xs text-gray-400 mt-1.5">Third badge is optional for 2-person teams.</p>
           </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { GameState, Round } from '@/lib/types';
+import type { TTTState, TTTWave } from '@/lib/ttt-types';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
 
@@ -104,15 +105,20 @@ function RoundEditor({ initial, onSave, onCancel }: RoundEditorProps) {
 interface ControlTabProps {
   state: GameState;
   onAction: (s: GameState) => void;
+  onScoresChange?: (scores: { x: number; o: number }) => void;
 }
 
-function ControlTab({ state, onAction }: ControlTabProps) {
+function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
   const [activeRound, setActiveRound] = useState<string | null>(
     state.rounds[0]?.id ?? null
   );
   const [scores, setScores] = useState({ x: 0, o: 0 });
   const adjust = (team: 'x' | 'o', delta: number) =>
-    setScores(s => ({ ...s, [team]: Math.max(0, s[team] + delta) }));
+    setScores(s => {
+      const next = { ...s, [team]: Math.max(0, s[team] + delta) };
+      onScoresChange?.(next);
+      return next;
+    });
 
   const showWord = useCallback(async (word: string) => {
     const next = await sendAction({ type: 'SHOW_WORD', word });
@@ -276,7 +282,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
               ))}
             </div>
             <button
-              onClick={() => setScores({ x: 0, o: 0 })}
+              onClick={() => { const z = { x: 0, o: 0 }; setScores(z); onScoresChange?.(z); }}
               className="w-full py-2 rounded-xl border border-gray-200 text-gray-400 text-sm font-medium active:bg-gray-50"
             >
               Reset Scores
@@ -512,14 +518,159 @@ function HelpModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ─── Submit tab ───────────────────────────────────────────────────────────────
+
+async function tttApi<T>(path: string, method = 'GET', body?: object): Promise<T> {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+  return data as T;
+}
+
+function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
+  const [tttState, setTttState] = useState<TTTState | null>(null);
+  const [wave, setWave] = useState<1 | 2 | 3>(1);
+  const [xBadges, setXBadges] = useState(['', '', '', '', '', '', '', '']);
+  const [oBadges, setOBadges] = useState(['', '', '', '', '', '', '', '']);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    tttApi<TTTState>('/api/ttt/waves').then(s => {
+      setTttState(s);
+      const existing = s.waves.find(w => w.wave === wave);
+      if (existing) {
+        const pad = (arr: string[]) => [...arr, '', '', '', '', '', '', '', ''].slice(0, 8);
+        setXBadges(pad(existing.xBadges));
+        setOBadges(pad(existing.oBadges));
+      }
+    });
+  }, [wave]);
+
+  function setBadge(team: 'x' | 'o', i: number, val: string) {
+    if (team === 'x') setXBadges(prev => { const n = [...prev]; n[i] = val; return n; });
+    else setOBadges(prev => { const n = [...prev]; n[i] = val; return n; });
+  }
+
+  async function handleSave(submit: boolean) {
+    const xB = xBadges.map(b => b.trim()).filter(Boolean);
+    const oB = oBadges.map(b => b.trim()).filter(Boolean);
+    if (xB.length === 0 || oB.length === 0) { setError('Enter badge numbers for both teams.'); return; }
+    setSaving(true); setMsg(''); setError('');
+    try {
+      const waveData: TTTWave = {
+        wave, xBadges: xB, oBadges: oB,
+        xScore: gameScores.x, oScore: gameScores.o,
+        submittedAt: submit ? new Date().toISOString() : undefined,
+      };
+      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
+      setTttState(next);
+      setMsg(submit ? `Wave ${wave} scores saved!` : 'Badges saved.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const currentWaveData = tttState?.waves.find(w => w.wave === wave);
+  const badgeInputs = (team: 'x' | 'o') => {
+    const badges = team === 'x' ? xBadges : oBadges;
+    const color = team === 'x' ? 'ring-orange-500 border-orange-300' : 'ring-sky-500 border-sky-300';
+    const label = team === 'x' ? 'Team X' : 'Team O';
+    const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
+    const score = team === 'x' ? gameScores.x : gameScores.o;
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className={`text-sm font-bold ${textColor}`}>{label}</p>
+          <span className={`text-2xl font-black ${textColor}`}>{score} pts</span>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {badges.map((b, i) => (
+            <input
+              key={i}
+              type="text"
+              inputMode="numeric"
+              value={b}
+              onChange={e => setBadge(team, i, e.target.value)}
+              placeholder={`#${i + 1}`}
+              className={`border rounded-xl px-2 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${color} ${i >= 4 ? 'border-dashed opacity-60' : ''}`}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full overflow-y-auto px-4 pt-4 pb-8 space-y-5">
+      {/* Wave selector */}
+      <div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Wave</p>
+        <div className="flex gap-2">
+          {([1, 2, 3] as const).map(w => {
+            const saved = tttState?.waves.some(wv => wv.wave === w && wv.submittedAt);
+            return (
+              <button
+                key={w}
+                onClick={() => { setWave(w); setMsg(''); setError(''); }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                  wave === w ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                }`}
+              >
+                Wave {w}{saved ? ' ✓' : ''}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 -mt-2">
+        Scores pulled from Control tab: <span className="font-semibold text-gray-600">X {gameScores.x} – O {gameScores.o}</span>
+      </p>
+
+      {badgeInputs('x')}
+      {badgeInputs('o')}
+
+      {currentWaveData?.submittedAt && (
+        <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+          Wave {wave} saved — X: {currentWaveData.xScore} pts, O: {currentWaveData.oScore} pts
+        </p>
+      )}
+
+      {msg && <p className="text-sm text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-xl text-center font-medium">{msg}</p>}
+      {error && <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl text-center">{error}</p>}
+
+      <button
+        onClick={() => handleSave(true)}
+        disabled={saving}
+        className="w-full bg-indigo-600 text-white font-bold rounded-2xl py-4 text-base active:bg-indigo-700 disabled:opacity-50"
+      >
+        {saving ? 'Saving…' : `Save Wave ${wave} Scores`}
+      </button>
+
+      <a href="/results" className="block text-center text-sm text-indigo-600 font-semibold py-2">
+        View Results ↗
+      </a>
+    </div>
+  );
+}
+
 // ─── Host page ────────────────────────────────────────────────────────────────
 
-type Tab = 'control' | 'setup';
+type Tab = 'control' | 'setup' | 'submit';
 
 export default function HostPage() {
   const [state, setState] = useState<GameState | null>(null);
   const [tab, setTab] = useState<Tab>('control');
   const [showHelp, setShowHelp] = useState(false);
+  const [liveScores, setLiveScores] = useState({ x: 0, o: 0 });
 
   useEffect(() => {
     fetch('/api/game')
@@ -563,22 +714,26 @@ export default function HostPage() {
 
       {/* Content */}
       <main className="flex-1 overflow-hidden flex flex-col">
-        {tab === 'control'
-          ? <ControlTab state={state} onAction={setState} />
-          : <SetupTab state={state} onAction={setState} />}
+        {tab === 'control' && <ControlTab state={state} onAction={setState} onScoresChange={setLiveScores} />}
+        {tab === 'setup' && <SetupTab state={state} onAction={setState} />}
+        {tab === 'submit' && <SubmitTab gameScores={liveScores} />}
       </main>
 
       {/* Bottom tab bar */}
       <nav className="bg-white border-t border-gray-200 flex flex-shrink-0">
-        {(['control', 'setup'] as Tab[]).map(t => (
+        {([
+          ['control', '🎮 Control'],
+          ['setup', '⚙️ Setup'],
+          ['submit', '📊 Submit'],
+        ] as [Tab, string][]).map(([t, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-3.5 text-sm font-semibold capitalize transition-colors ${
+            className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
               tab === t ? 'text-indigo-600' : 'text-gray-400'
             }`}
           >
-            {t === 'control' ? '🎮 Control' : '⚙️ Setup'}
+            {label}
           </button>
         ))}
       </nav>

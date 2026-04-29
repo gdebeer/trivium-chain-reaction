@@ -1,40 +1,7 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
-
-function TriviumLogo() {
-  return (
-    <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-      {/* Outer border ring */}
-      <circle cx="26" cy="26" r="25" fill="#111" stroke="white" strokeWidth="1.5"/>
-      {/* Inner border ring */}
-      <circle cx="26" cy="26" r="23" fill="none" stroke="white" strokeWidth="0.6" opacity="0.5"/>
-
-      {/* Top: bull's-eye (3 concentric circles) */}
-      <circle cx="26" cy="14" r="6"   fill="none" stroke="white" strokeWidth="1.3"/>
-      <circle cx="26" cy="14" r="3.2" fill="none" stroke="white" strokeWidth="1.3"/>
-      <circle cx="26" cy="14" r="1"   fill="white"/>
-
-      {/* Bottom-left: vertically split circle, left half filled */}
-      <circle cx="19" cy="25" r="6" fill="none" stroke="white" strokeWidth="1.3"/>
-      <path d="M19,19 A6,6 0 0,0 19,31 Z" fill="white"/>
-      <line x1="19" y1="19" x2="19" y2="31" stroke="white" strokeWidth="1.3"/>
-
-      {/* Bottom-right: horizontally striped circle */}
-      <circle cx="33" cy="25" r="6" fill="none" stroke="white" strokeWidth="1.3"/>
-      <line x1="27.2" y1="25"   x2="38.8" y2="25"   stroke="white" strokeWidth="1.3"/>
-      <line x1="27.8" y1="21.8" x2="38.2" y2="21.8" stroke="white" strokeWidth="1.1"/>
-      <line x1="27.8" y1="28.2" x2="38.2" y2="28.2" stroke="white" strokeWidth="1.1"/>
-
-      {/* TRIVIUM */}
-      <text x="26" y="39" textAnchor="middle" fill="white" fontSize="6.5" fontWeight="700"
-            letterSpacing="1.5" fontFamily="Georgia, 'Times New Roman', serif">TRIVIUM</text>
-      {/* GAMES */}
-      <text x="26" y="46" textAnchor="middle" fill="white" fontSize="4.2"
-            letterSpacing="3" fontFamily="Georgia, 'Times New Roman', serif">GAMES</text>
-    </svg>
-  );
-}
 
 function CatapultIceCream() {
   return (
@@ -141,7 +108,7 @@ export default function HomePage() {
       <header className="px-6 pt-10 pb-8">
         {/* Company brand */}
         <div className="flex items-center gap-3 mb-6">
-          <TriviumLogo />
+          <Image src="/Logo_circle_white.png" alt="Trivium Games" width={52} height={52} priority />
           <div>
             <p className="text-white font-bold text-base tracking-[0.18em]">TRIVIUM</p>
             <p className="text-gray-500 text-xs tracking-[0.22em]">GAMES</p>

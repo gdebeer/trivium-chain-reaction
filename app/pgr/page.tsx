@@ -282,7 +282,7 @@ export default function PGRPage() {
   const waveCount = (w: number) => state.entries.filter(e => e.wave === w).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-2xl mx-auto">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>

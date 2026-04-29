@@ -60,7 +60,7 @@ export default function ResultsPage() {
   const hasAnyData = results.length > 0;
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col max-w-lg mx-auto pb-12">
+    <div className="min-h-screen bg-gray-950 flex flex-col w-full max-w-2xl mx-auto pb-12">
       {/* Header */}
       <header className="px-4 pt-8 pb-5">
         <a href="/" className="text-xs text-gray-500 font-medium uppercase tracking-widest mb-1 block hover:text-orange-400 transition-colors">← Next View 2026</a>

@@ -30,6 +30,12 @@ async function saveState(state: LaunchState): Promise<LaunchState> {
   return state;
 }
 
+export async function resetState(): Promise<void> {
+  const fresh: LaunchState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  const r = redis();
+  if (r) { await r.set(KEY, fresh); } else { mem = fresh; }
+}
+
 export async function upsertTeam(waveNum: 1 | 2 | 3, team: LaunchTeam): Promise<LaunchState> {
   const state = await getState();
   const existing = state.waves.find(w => w.wave === waveNum);

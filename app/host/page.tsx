@@ -741,7 +741,10 @@ export default function HostPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
-        <h1 className="font-bold text-gray-900 text-base">Chain Reaction</h1>
+        <div className="flex items-center gap-2">
+          <a href="/" className="text-gray-400 text-sm font-medium hover:text-indigo-500 transition-colors" aria-label="Home">←</a>
+          <h1 className="font-bold text-gray-900 text-base">Tic Tac Talk</h1>
+        </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowHelp(true)}

@@ -30,6 +30,12 @@ async function saveState(state: TTTState): Promise<TTTState> {
   return state;
 }
 
+export async function resetState(): Promise<void> {
+  const fresh: TTTState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  const r = redis();
+  if (r) { await r.set(KEY, fresh); } else { mem = fresh; }
+}
+
 export async function upsertWave(wave: TTTWave): Promise<TTTState> {
   const state = await getState();
   const exists = state.waves.some(w => w.wave === wave.wave);

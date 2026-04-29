@@ -257,7 +257,7 @@ export default function PGRPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5">Next View 2026</p>
+          <a href="/" className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5 block hover:text-indigo-500 transition-colors">← Next View 2026</a>
           <h1 className="font-bold text-gray-900 text-lg leading-none">Pretty Good Race</h1>
         </div>
         <a href="/results" className="text-xs text-indigo-600 font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 active:bg-indigo-50">

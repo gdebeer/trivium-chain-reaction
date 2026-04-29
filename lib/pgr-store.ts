@@ -70,6 +70,12 @@ export async function updateSettings(settings: Partial<PGRSettings>): Promise<PG
   });
 }
 
+export async function resetState(): Promise<void> {
+  const fresh: PGRState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  const r = redis();
+  if (r) { await r.set(KEY, fresh); } else { mem = fresh; }
+}
+
 export async function markWaveSubmitted(wave: 1 | 2 | 3): Promise<PGRState> {
   const state = await getState();
   const submittedAt = new Date().toISOString();

@@ -57,7 +57,7 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-gray-950 flex flex-col max-w-lg mx-auto pb-12">
       {/* Header */}
       <header className="px-4 pt-8 pb-5">
-        <p className="text-xs text-gray-500 font-medium uppercase tracking-widest mb-1">Next View 2026</p>
+        <a href="/" className="text-xs text-gray-500 font-medium uppercase tracking-widest mb-1 block hover:text-orange-400 transition-colors">← Next View 2026</a>
         <div className="flex items-end justify-between">
           <h1 className="text-3xl font-black text-white leading-none">Leaderboard</h1>
           <button

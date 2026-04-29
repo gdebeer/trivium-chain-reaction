@@ -301,7 +301,7 @@ export default function LaunchPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5">Next View 2026</p>
+          <a href="/" className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5 block hover:text-orange-500 transition-colors">← Next View 2026</a>
           <h1 className="font-bold text-gray-900 text-lg leading-none">3-2-1 Launch</h1>
         </div>
         <a href="/results" className="text-xs text-orange-600 font-semibold px-3 py-1.5 rounded-lg border border-orange-200 active:bg-orange-50">

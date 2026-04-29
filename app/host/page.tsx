@@ -3,10 +3,20 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings, tttDefaultTeams } from '@/lib/badge-list';
-import type { UsedBadges } from '@/app/api/badges/route';
+import { tttDefaultTeams } from '@/lib/badge-list';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
+
+async function tttApi<T>(path: string, method = 'GET', body?: object): Promise<T> {
+  const res = await fetch(path, {
+    method,
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+  return data as T;
+}
 
 async function sendAction(body: object): Promise<GameState> {
   const res = await fetch('/api/game', {
@@ -107,20 +117,48 @@ function RoundEditor({ initial, onSave, onCancel }: RoundEditorProps) {
 interface ControlTabProps {
   state: GameState;
   onAction: (s: GameState) => void;
-  onScoresChange?: (scores: { x: number; o: number }) => void;
 }
 
-function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
+function ControlTab({ state, onAction }: ControlTabProps) {
   const [activeRound, setActiveRound] = useState<string | null>(
     state.rounds[0]?.id ?? null
   );
+  const [wave, setWave] = useState<1 | 2 | 3>(1);
   const [scores, setScores] = useState({ x: 0, o: 0 });
+  const [tttState, setTttState] = useState<TTTState | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMsg, setSubmitMsg] = useState('');
+
+  useEffect(() => {
+    tttApi<TTTState>('/api/ttt/waves').then(setTttState);
+  }, []);
+
+  function switchWave(w: 1 | 2 | 3) {
+    setWave(w);
+    setScores({ x: 0, o: 0 });
+    setSubmitMsg('');
+  }
+
   const adjust = (team: 'x' | 'o', delta: number) =>
-    setScores(s => {
-      const next = { ...s, [team]: Math.max(0, s[team] + delta) };
-      onScoresChange?.(next);
-      return next;
-    });
+    setScores(s => ({ ...s, [team]: Math.max(0, s[team] + delta) }));
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    setSubmitMsg('');
+    try {
+      const { x: xBadges, o: oBadges } = tttDefaultTeams(wave);
+      const waveData: TTTWave = {
+        wave, xBadges, oBadges,
+        xScore: scores.x, oScore: scores.o,
+        submittedAt: new Date().toISOString(),
+      };
+      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
+      setTttState(next);
+      setSubmitMsg(`Wave ${wave} saved!`);
+    } catch { /* silent */ } finally {
+      setSubmitting(false);
+    }
+  }
 
   const showWord = useCallback(async (word: string) => {
     const next = await sendAction({ type: 'SHOW_WORD', word });
@@ -154,8 +192,26 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Wave selector */}
+      <div className="px-4 pt-3 pb-3 flex gap-2 border-b border-gray-100 flex-shrink-0">
+        {([1, 2, 3] as const).map(w => {
+          const saved = tttState?.waves.some(wv => wv.wave === w && wv.submittedAt);
+          return (
+            <button
+              key={w}
+              onClick={() => switchWave(w)}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                wave === w ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+              }`}
+            >
+              Wave {w}{saved ? ' ✓' : ''}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Status bar */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="px-4 pt-3 pb-2 flex-shrink-0">
         <div className="bg-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
           <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${state.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
           <span className="text-sm text-gray-600">
@@ -164,20 +220,6 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
               : <span className="text-gray-400">Showing waiting screen</span>}
           </span>
         </div>
-      </div>
-
-      {/* Waiting button */}
-      <div className="px-4 pb-4">
-        <button
-          onClick={showWaiting}
-          className={`w-full rounded-xl py-3 font-semibold text-base border-2 transition-colors ${
-            state.status === 'waiting'
-              ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
-              : 'bg-white border-gray-200 text-gray-800 active:bg-indigo-50 active:border-indigo-300'
-          }`}
-        >
-          Show Waiting Screen
-        </button>
       </div>
 
       {state.rounds.length === 0 ? (
@@ -191,7 +233,7 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
       ) : (
         <>
           {/* Round tabs */}
-          <div className="px-4 pb-2 overflow-x-auto">
+          <div className="px-4 pb-2 overflow-x-auto flex-shrink-0">
             <div className="flex gap-2 pb-1">
               {state.rounds.map(r => (
                 <button
@@ -210,7 +252,7 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
           </div>
 
           {/* Word grid */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="flex-1 overflow-y-auto px-4 pb-2">
             {round ? (
               <div className="flex flex-wrap gap-2 pt-1">
                 {round.words.map(raw => {
@@ -241,6 +283,20 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
             ) : null}
           </div>
 
+          {/* Waiting button — below word grid */}
+          <div className="px-4 py-3 flex-shrink-0">
+            <button
+              onClick={showWaiting}
+              className={`w-full rounded-xl py-3 font-semibold text-base border-2 transition-colors ${
+                state.status === 'waiting'
+                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                  : 'bg-white border-gray-200 text-gray-800 active:bg-indigo-50 active:border-indigo-300'
+              }`}
+            >
+              Show Waiting Screen
+            </button>
+          </div>
+
           {/* Participant view preview */}
           <div className="px-4 pb-3 flex-shrink-0">
             <p className="text-xs text-gray-400 font-medium mb-1.5 uppercase tracking-wide">Participant screen</p>
@@ -257,8 +313,8 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
           </div>
 
           {/* Scoring */}
-          <div className="px-4 pb-3 flex-shrink-0">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Score</p>
+          <div className="px-4 pb-4 flex-shrink-0">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Score — Wave {wave}</p>
             <div className="flex gap-3 mb-2">
               {([['x', 'X', 'text-orange-600', 'bg-orange-600', 'border-orange-200'],
                  ['o', 'O', 'text-sky-400',    'bg-sky-400',    'border-sky-200'  ]] as const).map(
@@ -283,11 +339,15 @@ function ControlTab({ state, onAction, onScoresChange }: ControlTabProps) {
                 </div>
               ))}
             </div>
+            {submitMsg && (
+              <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2 mb-2 text-center font-medium">{submitMsg}</p>
+            )}
             <button
-              onClick={() => { const z = { x: 0, o: 0 }; setScores(z); onScoresChange?.(z); }}
-              className="w-full py-2 rounded-xl border border-gray-200 text-gray-400 text-sm font-medium active:bg-gray-50"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm active:bg-indigo-700 disabled:opacity-50"
             >
-              Reset Scores
+              {submitting ? 'Saving…' : `Submit Wave ${wave} Scores`}
             </button>
           </div>
 
@@ -520,208 +580,14 @@ function HelpModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ─── Submit tab ───────────────────────────────────────────────────────────────
-
-async function tttApi<T>(path: string, method = 'GET', body?: object): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-  return data as T;
-}
-
-function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
-  const [tttState, setTttState] = useState<TTTState | null>(null);
-  const [wave, setWave] = useState<1 | 2 | 3>(1);
-  const [xBadges, setXBadges] = useState<string[]>([]);
-  const [oBadges, setOBadges] = useState<string[]>([]);
-  const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    Promise.all([
-      tttApi<TTTState>('/api/ttt/waves'),
-      fetch('/api/badges').then(r => r.json()),
-    ]).then(([s, d]) => {
-      const allUsed = d as UsedBadges;
-      setTttState(s);
-      const existing = s.waves.find(w => w.wave === wave);
-      if (existing && (existing.xBadges.length > 0 || existing.oBadges.length > 0)) {
-        // Previously saved — preserve any manual overrides
-        setXBadges(existing.xBadges);
-        setOBadges(existing.oBadges);
-      } else {
-        // Pre-populate from routing schedule (odd last digit → X, even → O)
-        const { x, o } = tttDefaultTeams(wave);
-        setXBadges(x);
-        setOBadges(o);
-      }
-      // Badges belonging to this wave by schedule are never cross-wave duplicates
-      const { x: wx, o: wo } = tttDefaultTeams(wave);
-      const ownWaveBadges = new Set([...wx, ...wo]);
-      setUsedInStation(new Set(allUsed.ttt.filter(b => !ownWaveBadges.has(b))));
-    });
-  }, [wave]);
-
-  /** Odd last digit → X, even → O (default assignment by schedule). */
-  function defaultTeam(badge: string): 'x' | 'o' {
-    const last = parseInt(badge.trim().at(-1) ?? '', 10);
-    return !isNaN(last) && last % 2 !== 0 ? 'x' : 'o';
-  }
-
-  function moveBadge(b: string, from: 'x' | 'o') {
-    if (from === 'x') { setXBadges(p => p.filter(x => x !== b)); setOBadges(p => [...p, b]); }
-    else              { setOBadges(p => p.filter(x => x !== b)); setXBadges(p => [...p, b]); }
-  }
-
-  async function handleSave(submit: boolean) {
-    setSaving(true); setMsg(''); setError('');
-    try {
-      const waveData: TTTWave = {
-        wave, xBadges, oBadges,
-        xScore: gameScores.x, oScore: gameScores.o,
-        submittedAt: submit ? new Date().toISOString() : undefined,
-      };
-      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
-      setTttState(next);
-      setMsg(submit ? `Wave ${wave} scores saved!` : 'Saved.');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const currentWaveData = tttState?.waves.find(w => w.wave === wave);
-
-  // Badge validation — warnings only, never block saving
-  const allBadgesInWave = [...xBadges, ...oBadges];
-  const xStatuses = xBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
-  const oStatuses = oBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
-  // Only warn for cross-station duplicates or truly invalid codes; skip wave warnings (routing is automatic)
-  const warnings = badgeWarnings(allBadgesInWave, [...xStatuses, ...oStatuses]);
-
-  const teamColumn = (team: 'x' | 'o') => {
-    const badges = team === 'x' ? xBadges : oBadges;
-    const statuses = team === 'x' ? xStatuses : oStatuses;
-    const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
-    const label = team === 'x' ? 'Team X' : 'Team O';
-    const score = team === 'x' ? gameScores.x : gameScores.o;
-    return (
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
-          <p className={`text-sm font-bold ${textColor}`}>{label}</p>
-          <span className={`text-xl font-black ${textColor}`}>{score}</span>
-        </div>
-        <div className="flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border border-gray-100">
-          {badges.map((b, i) => {
-            const isOverride = defaultTeam(b) !== team;
-            return (
-              <div
-                key={b}
-                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-xs font-mono ${
-                  isOverride
-                    ? 'border-2 border-amber-400 bg-amber-50 font-bold'
-                    : `border ${BADGE_INPUT_CLASS[statuses[i]]}`
-                }`}
-              >
-                <span>{b}</span>
-                <button
-                  onClick={() => moveBadge(b, team)}
-                  className="w-4 h-4 flex items-center justify-center text-gray-400 active:text-gray-700"
-                  title={`Move to ${team === 'x' ? 'O' : 'X'}`}
-                >⇄</button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pt-4 pb-8 space-y-4">
-      {/* Wave selector */}
-      <div>
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Wave</p>
-        <div className="flex gap-2">
-          {([1, 2, 3] as const).map(w => {
-            const saved = tttState?.waves.some(wv => wv.wave === w && wv.submittedAt);
-            return (
-              <button
-                key={w}
-                onClick={() => { setWave(w); setMsg(''); setError(''); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  wave === w ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 active:bg-gray-200'
-                }`}
-              >
-                Wave {w}{saved ? ' ✓' : ''}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <p className="text-xs text-gray-400 -mt-1">
-        Scores from Control: <span className="font-semibold text-gray-600">X {gameScores.x} – O {gameScores.o}</span>
-      </p>
-
-      {/* Pre-populated team columns — tap ⇄ to move anyone who switched day-of */}
-      <div className="flex gap-3">
-        {teamColumn('x')}
-        {teamColumn('o')}
-      </div>
-      <p className="text-xs text-gray-400 -mt-2">Teams auto-assigned from badge schedule. Tap ⇄ to move if someone switched.</p>
-
-      {/* Warnings */}
-      {warnings.length > 0 && (
-        <ul className="space-y-0.5">
-          {warnings.map(w => (
-            <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
-              <span>⚠</span><span>{w}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {currentWaveData?.submittedAt && (
-        <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
-          Wave {wave} saved — X: {currentWaveData.xScore} pts, O: {currentWaveData.oScore} pts
-        </p>
-      )}
-
-      {msg && <p className="text-sm text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-xl text-center font-medium">{msg}</p>}
-      {error && <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl text-center">{error}</p>}
-
-      <button
-        onClick={() => handleSave(true)}
-        disabled={saving}
-        className="w-full bg-indigo-600 text-white font-bold rounded-2xl py-4 text-base active:bg-indigo-700 disabled:opacity-50"
-      >
-        {saving ? 'Saving…' : `Save Wave ${wave} Scores`}
-      </button>
-
-      <a href="/results" className="block text-center text-sm text-indigo-600 font-semibold py-2">
-        View Results ↗
-      </a>
-    </div>
-  );
-}
-
 // ─── Host page ────────────────────────────────────────────────────────────────
 
-type Tab = 'control' | 'setup' | 'submit';
+type Tab = 'control' | 'setup';
 
 export default function HostPage() {
   const [state, setState] = useState<GameState | null>(null);
   const [tab, setTab] = useState<Tab>('control');
   const [showHelp, setShowHelp] = useState(false);
-  const [liveScores, setLiveScores] = useState({ x: 0, o: 0 });
 
   useEffect(() => {
     fetch('/api/game')
@@ -768,9 +634,8 @@ export default function HostPage() {
 
       {/* Content */}
       <main className="flex-1 overflow-hidden flex flex-col">
-        {tab === 'control' && <ControlTab state={state} onAction={setState} onScoresChange={setLiveScores} />}
+        {tab === 'control' && <ControlTab state={state} onAction={setState} />}
         {tab === 'setup' && <SetupTab state={state} onAction={setState} />}
-        {tab === 'submit' && <SubmitTab gameScores={liveScores} />}
       </main>
 
       {/* Bottom tab bar */}
@@ -778,7 +643,6 @@ export default function HostPage() {
         {([
           ['control', '🎮 Control'],
           ['setup', '⚙️ Setup'],
-          ['submit', '📊 Submit'],
         ] as [Tab, string][]).map(([t, label]) => (
           <button
             key={t}

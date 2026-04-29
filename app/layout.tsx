@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Trivium Chain Reaction",
+  title: "Trivium 2026 Next View",
   description: "Trivium staff portal for the 2026 Next View event",
 };
 

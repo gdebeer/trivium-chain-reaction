@@ -31,7 +31,7 @@ function BadgeModal({
   onCancel: () => void;
 }) {
   const style = TEAM_COLORS_STYLE[color];
-  const [badges, setBadges] = useState<string[]>([...initial, '', '', ''].slice(0, 4));
+  const [badges, setBadges] = useState<string[]>([...initial, '', '', '', ''].slice(0, 4));
   const [saving, setSaving] = useState(false);
 
   function setBadge(i: number, val: string) {

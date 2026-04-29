@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { BadgeResult, ResultsPayload } from '@/app/api/results/route';
+import { BADGE_NAMES } from '@/lib/badge-list';
 
 function fmt(n: number | null) {
   if (n === null) return '—';
@@ -110,9 +111,10 @@ export default function ResultsPage() {
                   <div className="flex items-center gap-3 mb-2.5">
                     <MedalIcon rank={rank} />
                     <div className="flex-1 min-w-0">
-                      <span className={`text-lg font-black font-mono ${isTop3 ? 'text-white' : 'text-gray-300'}`}>
-                        #{r.badge}
-                      </span>
+                      <p className={`text-base font-bold leading-tight ${isTop3 ? 'text-white' : 'text-gray-300'}`}>
+                        {BADGE_NAMES[r.badge] ?? `Badge ${r.badge}`}
+                      </p>
+                      <p className="text-xs text-gray-500 font-mono leading-none mt-0.5">#{r.badge}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className={`text-2xl font-black tabular-nums ${

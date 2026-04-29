@@ -345,7 +345,7 @@ function ControlTab({ state, onAction }: ControlTabProps) {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm active:bg-indigo-700 disabled:opacity-50"
+              className="w-full py-3 rounded-xl border-2 border-indigo-500 text-indigo-600 bg-white font-semibold text-sm active:bg-indigo-50 disabled:opacity-50"
             >
               {submitting ? 'Saving…' : `Submit Wave ${wave} Scores`}
             </button>

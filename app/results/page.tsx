@@ -90,28 +90,25 @@ export default function ResultsPage() {
           ))}
         </div>
 
-        {/* Normalization denominators — scaled mode only */}
-        {view === 'scaled' && (
-          <div className="flex gap-2 mt-3">
-            {[
-              ['TTT', meta.tttMax !== null, meta.tttMax !== null ? `÷ ${meta.tttMax}` : 'no data'],
-              ['PGR', meta.pgrMax !== null, meta.pgrMax !== null ? `÷ ${meta.pgrMax}` : 'no data'],
-              ['Launch', meta.launchMax !== null, meta.launchMax !== null ? `÷ ${meta.launchMax}` : 'no data'],
-            ].map(([label, ready, sub]) => (
-              <div key={label as string} className={`flex-1 rounded-xl px-3 py-2 text-center ${ready ? 'bg-gray-800' : 'bg-gray-900 border border-gray-800'}`}>
-                <p className={`text-xs font-bold ${ready ? 'text-white' : 'text-gray-600'}`}>{label as string}</p>
-                <p className={`text-xs mt-0.5 ${ready ? 'text-gray-400' : 'text-gray-700'}`}>{sub as string}</p>
+        {/* Station stat pills — always rendered so layout stays stable */}
+        <div className="flex gap-2 mt-3">
+          {([
+            ['TTT',    meta.tttMax,    'indigo'],
+            ['PGR',    meta.pgrMax,    'violet'],
+            ['Launch', meta.launchMax, 'orange'],
+          ] as [string, number | null, string][]).map(([label, max, _color]) => {
+            const ready = max !== null;
+            const sub = ready
+              ? view === 'scaled' ? `÷ ${max}` : `best: ${max}`
+              : 'no data';
+            return (
+              <div key={label} className={`flex-1 rounded-xl px-3 py-2 text-center ${ready ? 'bg-gray-800' : 'bg-gray-900 border border-gray-800'}`}>
+                <p className={`text-xs font-bold ${ready ? 'text-white' : 'text-gray-600'}`}>{label}</p>
+                <p className={`text-xs mt-0.5 ${ready ? 'text-gray-400' : 'text-gray-700'}`}>{sub}</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Raw mode explanation */}
-        {view === 'raw' && (
-          <p className="text-xs text-gray-600 mt-3">
-            Actual game scores — ranking is still determined by scaled scores.
-          </p>
-        )}
+            );
+          })}
+        </div>
       </header>
 
       {/* Leaderboard */}

@@ -249,17 +249,19 @@ function TTTBadgeModal({
                 <button
                   onClick={() => moveBadge(b, team)}
                   title={`Move to Team ${team === 'x' ? 'O' : 'X'}`}
-                  className={`flex items-center gap-0.5 pl-1.5 pr-1 py-1 active:opacity-70 ${isOverride ? 'font-bold' : ''}`}
+                  className={`flex items-center gap-1 pl-2.5 pr-2 py-2 active:opacity-70 ${isOverride ? 'font-bold' : ''}`}
                 >
-                  {b} <span className="text-gray-400">⇄</span>
+                  {b} <span className="text-gray-400 text-xs">⇄</span>
                 </button>
                 <button
                   onClick={() => {
+                    const name = BADGE_NAMES[b] ? ` (${BADGE_NAMES[b]})` : '';
+                    if (!confirm(`Remove badge ${b}${name} from Wave ${wave}?`)) return;
                     if (team === 'x') setXBadges(p => p.filter(x => x !== b));
                     else setOBadges(p => p.filter(x => x !== b));
                   }}
                   title="Remove from wave"
-                  className="px-1 py-1 text-gray-300 hover:text-red-400 active:text-red-500 border-l border-gray-200"
+                  className="px-2.5 py-2 text-sm text-gray-300 active:text-red-500 border-l border-gray-200"
                 >
                   ×
                 </button>

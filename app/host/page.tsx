@@ -241,19 +241,29 @@ function TTTBadgeModal({
         <div className={`flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border ${borderColor} min-h-16 mb-2`}>
           {badges.map(b => {
             const isOverride = defaultTeam(b) !== team;
+            const chipBase = isOverride
+              ? 'border-2 border-amber-400 bg-amber-50'
+              : 'border border-gray-200 bg-white';
             return (
-              <button
-                key={b}
-                onClick={() => moveBadge(b, team)}
-                title={`Move to ${team === 'x' ? 'O' : 'X'}`}
-                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-xs font-mono active:opacity-70 ${
-                  isOverride
-                    ? 'border-2 border-amber-400 bg-amber-50 font-bold'
-                    : 'border border-gray-200 bg-white'
-                }`}
-              >
-                {b} <span className="text-gray-400 text-xs">⇄</span>
-              </button>
+              <div key={b} className={`flex items-center rounded-lg text-xs font-mono overflow-hidden ${chipBase}`}>
+                <button
+                  onClick={() => moveBadge(b, team)}
+                  title={`Move to Team ${team === 'x' ? 'O' : 'X'}`}
+                  className={`flex items-center gap-0.5 pl-1.5 pr-1 py-1 active:opacity-70 ${isOverride ? 'font-bold' : ''}`}
+                >
+                  {b} <span className="text-gray-400">⇄</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (team === 'x') setXBadges(p => p.filter(x => x !== b));
+                    else setOBadges(p => p.filter(x => x !== b));
+                  }}
+                  title="Remove from wave"
+                  className="px-1 py-1 text-gray-300 hover:text-red-400 active:text-red-500 border-l border-gray-200"
+                >
+                  ×
+                </button>
+              </div>
             );
           })}
         </div>

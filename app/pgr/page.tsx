@@ -329,17 +329,17 @@ export default function PGRPage() {
           </div>
         ) : (
           waveEntries.map(entry => (
-            <div key={entry.id} className="bg-white rounded-2xl border border-gray-200 px-4 py-4">
+            <div key={entry.id} className="bg-white rounded-2xl border border-gray-200 px-4 py-3">
               {/* Top row: badges + actions */}
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="flex flex-wrap gap-1.5">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex flex-wrap gap-1">
                   {entry.badges.map(b => (
-                    <span key={b} className="bg-indigo-100 text-indigo-700 text-sm font-bold px-2.5 py-1 rounded-lg font-mono">
+                    <span key={b} className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-lg font-mono">
                       #{b}
                     </span>
                   ))}
                   {entry.submittedAt && (
-                    <span className="text-xs text-emerald-600 bg-emerald-50 font-semibold px-2.5 py-1 rounded-lg">
+                    <span className="text-xs text-emerald-600 bg-emerald-50 font-semibold px-2 py-0.5 rounded-lg">
                       ✓ Submitted
                     </span>
                   )}
@@ -363,21 +363,21 @@ export default function PGRPage() {
               </div>
 
               {/* Score grid */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-1.5">
                 {([
                   ['Egypt', entry.egypt],
                   ['Caribbean', entry.caribbean],
                   ['Hollywood', entry.hollywood],
                   ['Australia', entry.australia],
                 ] as [string, number][]).map(([label, val]) => (
-                  <div key={label} className="bg-gray-50 rounded-xl py-3 text-center">
-                    <p className="text-xs text-gray-400 leading-none mb-2">{label}</p>
-                    <p className="text-2xl font-bold text-gray-800 leading-none">{val}</p>
+                  <div key={label} className="bg-gray-50 rounded-xl py-2 text-center">
+                    <p className="text-xs text-gray-400 leading-none mb-1">{label}</p>
+                    <p className="text-base font-bold text-gray-800 leading-none">{val}</p>
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-gray-400 mt-3 text-right">
+              <p className="text-xs text-gray-400 mt-1.5 text-right">
                 Finish order: <span className="font-semibold text-gray-600">#{entry.order}</span>
               </p>
             </div>

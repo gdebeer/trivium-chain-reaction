@@ -298,7 +298,7 @@ export default function LaunchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col max-w-2xl mx-auto">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
           <a href="/" className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5 block hover:text-orange-500 transition-colors">← Next View 2026</a>
@@ -324,7 +324,7 @@ export default function LaunchPage() {
               Wave {w}
               {count > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${wave === w ? 'bg-white/25 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                  {count}/5
+                  {count}
                 </span>
               )}
             </button>
@@ -353,7 +353,7 @@ export default function LaunchPage() {
       </main>
 
       {/* Submit footer */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
+      <div className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
         {submitMsg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5 mb-2 text-center font-medium">{submitMsg}</p>}
         {submitError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5 mb-2 text-center">{submitError}</p>}
         <button
@@ -363,7 +363,7 @@ export default function LaunchPage() {
             waveSubmitted ? 'bg-emerald-600 text-white active:bg-emerald-700' : 'bg-orange-500 text-white active:bg-orange-600'
           }`}
         >
-          {submitting ? 'Saving…' : waveSubmitted ? `Resave Wave ${wave}` : `Save Wave ${wave} Scores`}
+          {submitting ? 'Submitting…' : waveSubmitted ? `Resubmit Wave ${wave}` : `Submit Wave ${wave} Scores`}
           {completeCount > 0 && !submitting && (
             <span className="ml-2 opacity-75 font-normal text-sm">({completeCount}/5)</span>
           )}

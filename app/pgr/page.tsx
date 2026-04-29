@@ -253,7 +253,7 @@ export default function PGRPage() {
   const waveCount = (w: number) => state.entries.filter(e => e.wave === w).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col max-w-2xl mx-auto">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
@@ -364,7 +364,7 @@ export default function PGRPage() {
       </main>
 
       {/* Fixed submit footer */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
+      <div className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
         {submitMsg && (
           <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5 mb-2 text-center font-medium">
             {submitMsg}

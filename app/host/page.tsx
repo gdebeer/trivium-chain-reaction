@@ -299,7 +299,17 @@ function ControlTab({ state, onAction }: ControlTabProps) {
 
           {/* Participant view preview */}
           <div className="px-4 pb-3 flex-shrink-0">
-            <p className="text-xs text-gray-400 font-medium mb-1.5 uppercase tracking-wide">Participant screen</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Participant screen</p>
+              <a
+                href="/display"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-indigo-600 font-semibold"
+              >
+                Open Display ↗
+              </a>
+            </div>
             <div className="bg-black rounded-2xl h-28 flex items-center justify-center overflow-hidden">
               {state.status === 'waiting' || !state.currentWord ? (
                 <p className="text-gray-600 text-sm font-light tracking-widest uppercase">Waiting…</p>
@@ -526,7 +536,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onClose}>
       <div
-        className="w-full bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto space-y-5 max-w-lg mx-auto"
+        className="w-full bg-white rounded-t-2xl p-5 max-h-[85vh] overflow-y-auto space-y-5 max-w-2xl mx-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -604,7 +614,7 @@ export default function HostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-lg mx-auto">
+    <div className="min-h-screen bg-gray-50 flex flex-col max-w-2xl mx-auto">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
@@ -619,13 +629,8 @@ export default function HostPage() {
           >
             ?
           </button>
-          <a
-            href="/display"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-indigo-600 font-medium"
-          >
-            Display ↗
+          <a href="/results" className="text-xs text-indigo-600 font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 active:bg-indigo-50">
+            Results ↗
           </a>
         </div>
       </header>

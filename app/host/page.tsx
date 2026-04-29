@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings } from '@/lib/badge-list';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings, tttDefaultTeams } from '@/lib/badge-list';
 import type { UsedBadges } from '@/app/api/badges/route';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
@@ -536,8 +536,8 @@ async function tttApi<T>(path: string, method = 'GET', body?: object): Promise<T
 function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
   const [tttState, setTttState] = useState<TTTState | null>(null);
   const [wave, setWave] = useState<1 | 2 | 3>(1);
-  const [xBadges, setXBadges] = useState(['', '', '', '', '', '', '', '']);
-  const [oBadges, setOBadges] = useState(['', '', '', '', '', '', '', '']);
+  const [xBadges, setXBadges] = useState<string[]>([]);
+  const [oBadges, setOBadges] = useState<string[]>([]);
   const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
@@ -548,42 +548,48 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
       tttApi<TTTState>('/api/ttt/waves'),
       fetch('/api/badges').then(r => r.json()),
     ]).then(([s, d]) => {
-      const badges = d as UsedBadges;
+      const allUsed = d as UsedBadges;
       setTttState(s);
       const existing = s.waves.find(w => w.wave === wave);
-      if (existing) {
-        const pad = (arr: string[]) => [...arr, '', '', '', '', '', '', '', ''].slice(0, 8);
-        setXBadges(pad(existing.xBadges));
-        setOBadges(pad(existing.oBadges));
+      if (existing && (existing.xBadges.length > 0 || existing.oBadges.length > 0)) {
+        // Previously saved — preserve any manual overrides
+        setXBadges(existing.xBadges);
+        setOBadges(existing.oBadges);
+      } else {
+        // Pre-populate from routing schedule (odd last digit → X, even → O)
+        const { x, o } = tttDefaultTeams(wave);
+        setXBadges(x);
+        setOBadges(o);
       }
-      // Exclude this wave's own badges so editing doesn't self-flag
-      const ownBadges = new Set([
-        ...(existing?.xBadges ?? []),
-        ...(existing?.oBadges ?? []),
-      ]);
-      setUsedInStation(new Set(badges.ttt.filter(b => !ownBadges.has(b))));
+      // Badges belonging to this wave by schedule are never cross-wave duplicates
+      const { x: wx, o: wo } = tttDefaultTeams(wave);
+      const ownWaveBadges = new Set([...wx, ...wo]);
+      setUsedInStation(new Set(allUsed.ttt.filter(b => !ownWaveBadges.has(b))));
     });
   }, [wave]);
 
-  function setBadge(team: 'x' | 'o', i: number, val: string) {
-    if (team === 'x') setXBadges(prev => { const n = [...prev]; n[i] = val; return n; });
-    else setOBadges(prev => { const n = [...prev]; n[i] = val; return n; });
+  /** Odd last digit → X, even → O (default assignment by schedule). */
+  function defaultTeam(badge: string): 'x' | 'o' {
+    const last = parseInt(badge.trim().at(-1) ?? '', 10);
+    return !isNaN(last) && last % 2 !== 0 ? 'x' : 'o';
+  }
+
+  function moveBadge(b: string, from: 'x' | 'o') {
+    if (from === 'x') { setXBadges(p => p.filter(x => x !== b)); setOBadges(p => [...p, b]); }
+    else              { setOBadges(p => p.filter(x => x !== b)); setXBadges(p => [...p, b]); }
   }
 
   async function handleSave(submit: boolean) {
-    const xB = xBadges.map(b => b.trim()).filter(Boolean);
-    const oB = oBadges.map(b => b.trim()).filter(Boolean);
-    if (xB.length === 0 || oB.length === 0) { setError('Enter badge numbers for both teams.'); return; }
     setSaving(true); setMsg(''); setError('');
     try {
       const waveData: TTTWave = {
-        wave, xBadges: xB, oBadges: oB,
+        wave, xBadges, oBadges,
         xScore: gameScores.x, oScore: gameScores.o,
         submittedAt: submit ? new Date().toISOString() : undefined,
       };
       const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
       setTttState(next);
-      setMsg(submit ? `Wave ${wave} scores saved!` : 'Badges saved.');
+      setMsg(submit ? `Wave ${wave} scores saved!` : 'Saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed');
     } finally {
@@ -597,55 +603,46 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
   const allBadgesInWave = [...xBadges, ...oBadges];
   const xStatuses = xBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
   const oStatuses = oBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
-  const xWarnings = [...badgeWarnings(xBadges, xStatuses), ...badgeWaveWarnings(xBadges, wave, 'ttt')];
-  const oWarnings = [...badgeWarnings(oBadges, oStatuses), ...badgeWaveWarnings(oBadges, wave, 'ttt')];
+  // Only warn for cross-station duplicates or truly invalid codes; skip wave warnings (routing is automatic)
+  const warnings = badgeWarnings(allBadgesInWave, [...xStatuses, ...oStatuses]);
 
-  const badgeInputs = (team: 'x' | 'o') => {
+  const teamColumn = (team: 'x' | 'o') => {
     const badges = team === 'x' ? xBadges : oBadges;
     const statuses = team === 'x' ? xStatuses : oStatuses;
-    const warnings = team === 'x' ? xWarnings : oWarnings;
-    const ringColor = team === 'x' ? 'ring-orange-500' : 'ring-sky-500';
-    const label = team === 'x' ? 'Team X' : 'Team O';
     const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
+    const label = team === 'x' ? 'Team X' : 'Team O';
     const score = team === 'x' ? gameScores.x : gameScores.o;
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1.5">
           <p className={`text-sm font-bold ${textColor}`}>{label}</p>
-          <span className={`text-2xl font-black ${textColor}`}>{score} pts</span>
+          <span className={`text-xl font-black ${textColor}`}>{score}</span>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {badges.map((b, i) => (
-            <input
-              key={i}
-              type="text"
-              inputMode="numeric"
-              value={b}
-              onChange={e => setBadge(team, i, e.target.value)}
-              placeholder={`#${i + 1}`}
-              className={`border rounded-xl px-2 py-2.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${ringColor} ${
-                i >= 4 && statuses[i] === 'empty'
-                  ? 'border-dashed border-gray-300 opacity-60'
-                  : BADGE_INPUT_CLASS[statuses[i]]
-              }`}
-            />
-          ))}
+        <div className="flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border border-gray-100">
+          {badges.map((b, i) => {
+            const isOverride = defaultTeam(b) !== team;
+            return (
+              <div
+                key={b}
+                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg border text-xs font-mono ${BADGE_INPUT_CLASS[statuses[i]]}`}
+              >
+                <span>{b}</span>
+                {isOverride && <span className="text-amber-400 mx-0.5" title="Manually reassigned">↕</span>}
+                <button
+                  onClick={() => moveBadge(b, team)}
+                  className="w-4 h-4 flex items-center justify-center text-gray-400 active:text-gray-700"
+                  title={`Move to ${team === 'x' ? 'O' : 'X'}`}
+                >⇄</button>
+              </div>
+            );
+          })}
         </div>
-        {warnings.length > 0 && (
-          <ul className="space-y-0.5">
-            {warnings.map(w => (
-              <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
-                <span>⚠</span><span>{w}</span>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
     );
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 pt-4 pb-8 space-y-5">
+    <div className="flex flex-col h-full overflow-y-auto px-4 pt-4 pb-8 space-y-4">
       {/* Wave selector */}
       <div>
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Wave</p>
@@ -667,12 +664,27 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
         </div>
       </div>
 
-      <p className="text-xs text-gray-400 -mt-2">
-        Scores pulled from Control tab: <span className="font-semibold text-gray-600">X {gameScores.x} – O {gameScores.o}</span>
+      <p className="text-xs text-gray-400 -mt-1">
+        Scores from Control: <span className="font-semibold text-gray-600">X {gameScores.x} – O {gameScores.o}</span>
       </p>
 
-      {badgeInputs('x')}
-      {badgeInputs('o')}
+      {/* Pre-populated team columns — tap ⇄ to move anyone who switched day-of */}
+      <div className="flex gap-3">
+        {teamColumn('x')}
+        {teamColumn('o')}
+      </div>
+      <p className="text-xs text-gray-400 -mt-2">Teams auto-assigned from badge schedule. Tap ⇄ to move if someone switched.</p>
+
+      {/* Warnings */}
+      {warnings.length > 0 && (
+        <ul className="space-y-0.5">
+          {warnings.map(w => (
+            <li key={w} className="text-xs text-amber-700 flex items-start gap-1">
+              <span>⚠</span><span>{w}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {currentWaveData?.submittedAt && (
         <p className="text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">

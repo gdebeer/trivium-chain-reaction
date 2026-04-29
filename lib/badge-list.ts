@@ -91,3 +91,22 @@ export function badgeWaveWarnings(
   }
   return lines;
 }
+
+// ─── TTT pre-computed teams ───────────────────────────────────────────────────
+
+/**
+ * Returns the pre-determined X and O teams for a TTT wave.
+ * X = odd last digit, O = even last digit.
+ * Based entirely on VALID_BADGE_SET + routing schedule — no manual entry needed.
+ */
+export function tttDefaultTeams(wave: 1 | 2 | 3): { x: string[]; o: string[] } {
+  const x: string[] = [];
+  const o: string[] = [];
+  for (const badge of VALID_BADGE_SET) {
+    if (getExpectedWave(badge, 'ttt') !== wave) continue;
+    const last = parseInt(badge.at(-1) ?? '', 10);
+    if (!isNaN(last) && last % 2 !== 0) x.push(badge);
+    else o.push(badge);
+  }
+  return { x: x.sort(), o: o.sort() };
+}

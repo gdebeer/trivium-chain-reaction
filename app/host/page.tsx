@@ -118,16 +118,15 @@ function TTTBadgeModal({
   wave,
   tttState: initialTttState,
   currentScores,
-  onSave,
-  onCancel,
+  onUpdate,
+  onClose,
 }: {
   wave: 1 | 2 | 3;
   tttState: TTTState | null;
   currentScores: { x: number; o: number };
-  onSave: (next: TTTState) => void;
-  onCancel: () => void;
+  onUpdate: (next: TTTState) => void;
+  onClose: () => void;
 }) {
-  // Keep a local copy of tttState so cross-wave removals update it immediately
   const [localTttState, setLocalTttState] = useState<TTTState | null>(initialTttState);
   const savedWave = localTttState?.waves.find(wv => wv.wave === wave);
   const defaults = tttDefaultTeams(wave);
@@ -138,7 +137,7 @@ function TTTBadgeModal({
   const [oBadges, setOBadges] = useState<string[]>(
     savedWave?.oBadges.length ? [...savedWave.oBadges] : [...defaults.o]
   );
-  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [addInput, setAddInput] = useState<{ x: string; o: string }>({ x: '', o: '' });
   const [addMsg, setAddMsg] = useState('');
 
@@ -147,14 +146,42 @@ function TTTBadgeModal({
     return !isNaN(last) && last % 2 !== 0 ? 'x' : 'o';
   }
 
-  function moveBadge(b: string, from: 'x' | 'o') {
-    if (from === 'x') {
-      setXBadges(p => p.filter(x => x !== b));
-      setOBadges(p => [...p, b].sort());
-    } else {
-      setOBadges(p => p.filter(x => x !== b));
-      setXBadges(p => [...p, b].sort());
+  // Core auto-save: called after every mutation with the new badge arrays
+  async function persist(newX: string[], newO: string[]) {
+    setSaveStatus('saving');
+    try {
+      const waveData: TTTWave = {
+        wave, xBadges: newX, oBadges: newO,
+        xScore: currentScores.x,
+        oScore: currentScores.o,
+        submittedAt: savedWave?.submittedAt,
+      };
+      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
+      setLocalTttState(next);
+      onUpdate(next);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    } catch {
+      setSaveStatus('idle');
     }
+  }
+
+  function moveBadge(b: string, from: 'x' | 'o') {
+    const newX = from === 'x' ? xBadges.filter(x => x !== b) : [...xBadges, b].sort();
+    const newO = from === 'o' ? oBadges.filter(x => x !== b) : [...oBadges, b].sort();
+    setXBadges(newX);
+    setOBadges(newO);
+    persist(newX, newO);
+  }
+
+  function removeBadge(b: string, team: 'x' | 'o') {
+    const name = BADGE_NAMES[b] ? ` (${BADGE_NAMES[b]})` : '';
+    if (!confirm(`Remove badge ${b}${name} from Wave ${wave}?`)) return;
+    const newX = team === 'x' ? xBadges.filter(x => x !== b) : xBadges;
+    const newO = team === 'o' ? oBadges.filter(x => x !== b) : oBadges;
+    setXBadges(newX);
+    setOBadges(newO);
+    persist(newX, newO);
   }
 
   async function addBadge(team: 'x' | 'o') {
@@ -162,25 +189,24 @@ function TTTBadgeModal({
     if (!b) return;
     setAddMsg('');
 
-    // Already in this wave?
     if (xBadges.includes(b) || oBadges.includes(b)) {
       setAddMsg(`⚠ ${b} is already in this wave.`);
       return;
     }
 
     // In a different wave? Ask before moving.
-    if (localTttState) {
-      for (const wv of localTttState.waves) {
+    let latestState = localTttState;
+    if (latestState) {
+      for (const wv of latestState.waves) {
         if (wv.wave === wave) continue;
         const inX = wv.xBadges.includes(b);
         const inO = wv.oBadges.includes(b);
         if (inX || inO) {
-          const name = BADGE_NAMES[b] ? ` (${BADGE_NAMES[b]})` : '';
+          const personName = BADGE_NAMES[b] ? ` (${BADGE_NAMES[b]})` : '';
           const ok = confirm(
-            `Badge ${b}${name} is already in Wave ${wv.wave} — Team ${inX ? 'X' : 'O'}.\n\nRemove it from Wave ${wv.wave} and add it here?`
+            `Badge ${b}${personName} is already in Wave ${wv.wave} — Team ${inX ? 'X' : 'O'}.\n\nRemove it from Wave ${wv.wave} and add it here?`
           );
           if (!ok) return;
-          // Remove from the other wave and persist
           const updated = await tttApi<TTTState>('/api/ttt/waves', 'POST', {
             wave: wv.wave,
             xBadges: inX ? wv.xBadges.filter(x => x !== b) : wv.xBadges,
@@ -190,43 +216,26 @@ function TTTBadgeModal({
             submittedAt: wv.submittedAt,
           } as TTTWave);
           setLocalTttState(updated);
+          onUpdate(updated);
+          latestState = updated;
           break;
         }
       }
     }
 
-    // Add to chosen team
-    if (team === 'x') {
-      setXBadges(p => [...p, b].sort());
-      setAddInput(a => ({ ...a, x: '' }));
-    } else {
-      setOBadges(p => [...p, b].sort());
-      setAddInput(a => ({ ...a, o: '' }));
-    }
+    const newX = team === 'x' ? [...xBadges, b].sort() : xBadges;
+    const newO = team === 'o' ? [...oBadges, b].sort() : oBadges;
+    setXBadges(newX);
+    setOBadges(newO);
+    setAddInput(a => ({ ...a, [team]: '' }));
+    persist(newX, newO);
 
-    // Feedback
     if (!VALID_BADGE_SET.has(b)) {
       setAddMsg(`⚠ ${b} is not a recognised badge number — added anyway.`);
     } else {
       const name = BADGE_NAMES[b];
-      setAddMsg(name ? `✓ Added ${name} to Team ${team.toUpperCase()}.` : `✓ Added ${b} to Team ${team.toUpperCase()}.`);
+      setAddMsg(name ? `✓ ${name} added to Team ${team.toUpperCase()}.` : `✓ ${b} added to Team ${team.toUpperCase()}.`);
       setTimeout(() => setAddMsg(''), 2500);
-    }
-  }
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      const waveData: TTTWave = {
-        wave, xBadges, oBadges,
-        xScore: currentScores.x,
-        oScore: currentScores.o,
-        submittedAt: savedWave?.submittedAt,
-      };
-      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
-      onSave(next);
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -254,12 +263,7 @@ function TTTBadgeModal({
                   {b} <span className="text-gray-400 text-xs">⇄</span>
                 </button>
                 <button
-                  onClick={() => {
-                    const name = BADGE_NAMES[b] ? ` (${BADGE_NAMES[b]})` : '';
-                    if (!confirm(`Remove badge ${b}${name} from Wave ${wave}?`)) return;
-                    if (team === 'x') setXBadges(p => p.filter(x => x !== b));
-                    else setOBadges(p => p.filter(x => x !== b));
-                  }}
+                  onClick={() => removeBadge(b, team)}
                   title="Remove from wave"
                   className="px-2.5 py-2 text-sm text-gray-300 active:text-red-500 border-l border-gray-200"
                 >
@@ -269,7 +273,6 @@ function TTTBadgeModal({
             );
           })}
         </div>
-        {/* Add badge input */}
         <div className="flex gap-1.5">
           <input
             type="text"
@@ -293,16 +296,20 @@ function TTTBadgeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onCancel}>
+    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onClose}>
       <div
         className="w-full bg-white rounded-t-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto max-w-2xl mx-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">Wave {wave} — Badge Assignments</h2>
-          <button onClick={onCancel} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+          <div className="flex items-center gap-3">
+            {saveStatus === 'saving' && <span className="text-xs text-gray-400">Saving…</span>}
+            {saveStatus === 'saved'  && <span className="text-xs text-emerald-600 font-medium">Saved ✓</span>}
+            <button onClick={onClose} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+          </div>
         </div>
-        <p className="text-xs text-gray-400 -mt-2">Tap a badge to swap teams. Amber = moved from default. Use inputs to add someone not on the list.</p>
+        <p className="text-xs text-gray-400 -mt-2">Changes save automatically. Tap a badge to swap teams — amber = moved from default.</p>
         {addMsg && (
           <p className={`text-xs px-3 py-2 rounded-lg ${addMsg.startsWith('⚠') ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
             {addMsg}
@@ -312,13 +319,6 @@ function TTTBadgeModal({
           {teamCol('x')}
           {teamCol('o')}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-3 text-sm active:bg-indigo-700 disabled:opacity-50"
-        >
-          {saving ? 'Saving…' : 'Save Badge Assignments'}
-        </button>
       </div>
     </div>
   );
@@ -647,8 +647,8 @@ function ControlTab({ state, onAction }: ControlTabProps) {
           wave={wave}
           tttState={tttState}
           currentScores={scores}
-          onSave={next => { setTttState(next); setShowBadges(false); }}
-          onCancel={() => setShowBadges(false)}
+          onUpdate={next => setTttState(next)}
+          onClose={() => setShowBadges(false)}
         />
       )}
     </div>

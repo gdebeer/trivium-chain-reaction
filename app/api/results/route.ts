@@ -49,12 +49,13 @@ export async function GET(): Promise<Response> {
     for (const b of wave.oBadges) if (!tttMap.has(b)) tttMap.set(b, wave.oScore);
   }
 
-  // Launch: each badge gets their team's total score
+  // Launch: each badge gets their team's total score (only if both rounds scored)
   const launchMap = new Map<string, number>();
   for (const wave of launch.waves) {
     for (const team of Object.values(wave.teams)) {
       if (!team) continue;
       const total = launchTeamTotal(team);
+      if (total === null) continue;
       for (const badge of team.badges) {
         if (!launchMap.has(badge)) launchMap.set(badge, total);
       }

@@ -51,6 +51,12 @@ export async function markWaveSubmitted(waveNum: 1 | 2 | 3): Promise<LaunchState
   });
 }
 
+export async function mergeBadges(waveNum: 1 | 2 | 3, color: TeamColor, badges: string[]): Promise<LaunchState> {
+  const state = await getState();
+  const existing = state.waves.find(w => w.wave === waveNum)?.teams[color];
+  return upsertTeam(waveNum, { color, badges, ...existing ? { round1Feet: existing.round1Feet, round2Total: existing.round2Total } : {} });
+}
+
 export async function clearTeam(waveNum: 1 | 2 | 3, color: TeamColor): Promise<LaunchState> {
   const state = await getState();
   return saveState({

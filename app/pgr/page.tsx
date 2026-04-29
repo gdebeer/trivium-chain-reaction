@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import type { PGREntry, PGRState, PGRSettings } from '@/lib/pgr-types';
+import type { PGREntry, PGRState } from '@/lib/pgr-types';
 
 // ─── API helper ───────────────────────────────────────────────────────────────
 
@@ -165,85 +165,12 @@ function EntryForm({
   );
 }
 
-// ─── Settings modal ───────────────────────────────────────────────────────────
-
-function SettingsModal({
-  settings,
-  onSave,
-  onClose,
-}: {
-  settings: PGRSettings;
-  onSave: (s: PGRSettings) => void;
-  onClose: () => void;
-}) {
-  const [sheetId, setSheetId] = useState(settings.sheetId);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  async function handleSave() {
-    setSaving(true);
-    setError('');
-    try {
-      const updated = await api<PGRSettings>('/api/pgr/settings', 'POST', { sheetId: sheetId.trim() });
-      onSave(updated);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
-      setSaving(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onClose}>
-      <div
-        className="w-full bg-white rounded-t-2xl p-5 space-y-5"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Settings</h2>
-          <button onClick={onClose} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Google Sheet ID</label>
-          <input
-            value={sheetId}
-            onChange={e => setSheetId(e.target.value)}
-            placeholder="Paste the Sheet ID from the URL…"
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            autoCapitalize="off"
-            autoCorrect="off"
-          />
-          <p className="text-xs text-gray-400 mt-2 leading-relaxed">
-            In the sheet URL: docs.google.com/spreadsheets/d/<span className="font-semibold text-gray-600">SHEET_ID</span>/edit
-          </p>
-          <p className="text-xs text-gray-400 mt-1 leading-relaxed">
-            The sheet must be shared with your Google service account email.
-          </p>
-        </div>
-
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-xl">{error}</p>
-        )}
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="w-full bg-indigo-600 text-white font-semibold rounded-2xl py-4 text-base active:bg-indigo-700 disabled:opacity-50"
-        >
-          {saving ? 'Saving…' : 'Save Settings'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function PGRPage() {
   const [state, setState] = useState<PGRState | null>(null);
   const [wave, setWave] = useState<1 | 2 | 3>(1);
   const [editingEntry, setEditingEntry] = useState<PGREntry | 'new' | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -302,13 +229,9 @@ export default function PGRPage() {
           <p className="text-xs text-gray-400 font-medium uppercase tracking-wider leading-none mb-0.5">Next View 2026</p>
           <h1 className="font-bold text-gray-900 text-lg leading-none">Pretty Good Race</h1>
         </div>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lg active:bg-gray-100"
-          aria-label="Settings"
-        >
-          ⚙️
-        </button>
+        <a href="/results" className="text-xs text-indigo-600 font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 active:bg-indigo-50">
+          Results ↗
+        </a>
       </header>
 
       {/* Wave tabs */}
@@ -445,14 +368,6 @@ export default function PGRPage() {
           initial={editingEntry !== 'new' ? editingEntry : undefined}
           onSave={s => { setState(s); setEditingEntry(null); }}
           onCancel={() => setEditingEntry(null)}
-        />
-      )}
-
-      {showSettings && (
-        <SettingsModal
-          settings={state.settings}
-          onSave={s => { setState(prev => prev ? { ...prev, settings: s } : prev); setShowSettings(false); }}
-          onClose={() => setShowSettings(false)}
         />
       )}
     </div>

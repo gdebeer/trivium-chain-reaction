@@ -284,7 +284,7 @@ export default function PGRPage() {
     try {
       const next = await api<PGRState>('/api/pgr/submit', 'POST', { wave });
       setState(next);
-      setSubmitMsg(`Wave ${wave} sent to Google Sheets!`);
+      setSubmitMsg(`Wave ${wave} scores saved!`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Submission failed');
     } finally {
@@ -304,27 +304,12 @@ export default function PGRPage() {
         </div>
         <button
           onClick={() => setShowSettings(true)}
-          className={`w-10 h-10 rounded-xl border flex items-center justify-center text-lg active:bg-gray-100 transition-colors ${
-            state.settings.sheetId ? 'border-gray-200 text-gray-500' : 'border-amber-300 bg-amber-50 text-amber-600'
-          }`}
+          className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-lg active:bg-gray-100"
           aria-label="Settings"
-          title={state.settings.sheetId ? 'Settings' : 'Sheet ID not set — tap to configure'}
         >
           ⚙️
         </button>
       </header>
-
-      {/* Sheet ID warning banner */}
-      {!state.settings.sheetId && (
-        <button
-          onClick={() => setShowSettings(true)}
-          className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-left w-full"
-        >
-          <p className="text-xs text-amber-700 font-medium">
-            Sheet ID not configured — tap here or ⚙️ to set it before submitting scores.
-          </p>
-        </button>
-      )}
 
       {/* Wave tabs */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex gap-2 flex-shrink-0">
@@ -448,8 +433,8 @@ export default function PGRPage() {
           {submitting
             ? 'Submitting…'
             : waveAlreadySubmitted
-              ? `Resubmit Wave ${wave} to Sheet`
-              : `Submit Wave ${wave} to Sheet`}
+              ? `Resubmit Wave ${wave}`
+              : `Submit Wave ${wave} Scores`}
         </button>
       </div>
 

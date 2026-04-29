@@ -624,10 +624,13 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
             return (
               <div
                 key={b}
-                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg border text-xs font-mono ${BADGE_INPUT_CLASS[statuses[i]]}`}
+                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-xs font-mono ${
+                  isOverride
+                    ? 'border-2 border-amber-400 bg-amber-50 font-bold'
+                    : `border ${BADGE_INPUT_CLASS[statuses[i]]}`
+                }`}
               >
                 <span>{b}</span>
-                {isOverride && <span className="text-amber-400 mx-0.5" title="Manually reassigned">↕</span>}
                 <button
                   onClick={() => moveBadge(b, team)}
                   className="w-4 h-4 flex items-center justify-center text-gray-400 active:text-gray-700"

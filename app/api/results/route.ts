@@ -3,8 +3,6 @@ import { getState as getLaunchState } from '@/lib/launch-store';
 import { getState as getTTTState } from '@/lib/ttt-store';
 import { launchTeamTotal } from '@/lib/launch-types';
 
-const PGR_MAX = 24;
-
 export interface BadgeResult {
   badge: string;
   pgrRaw: number | null;
@@ -22,7 +20,7 @@ export interface ResultsPayload {
   meta: {
     tttMax: number | null;
     launchMax: number | null;
-    pgrMax: number;
+    pgrMax: number | null;
     lastUpdated: string;
   };
 }
@@ -63,7 +61,8 @@ export async function GET(): Promise<Response> {
   }
 
   // ── Normalization denominators ─────────────────────────────────────────────
-  const tttMax = tttMap.size > 0 ? Math.max(...tttMap.values()) : null;
+  const pgrMax  = pgrMap.size  > 0 ? Math.max(...Array.from(pgrMap.values()).map(v => v.raw)) : null;
+  const tttMax  = tttMap.size  > 0 ? Math.max(...tttMap.values())    : null;
   const launchMax = launchMap.size > 0 ? Math.max(...launchMap.values()) : null;
 
   // ── Combine all known badges ───────────────────────────────────────────────
@@ -75,7 +74,7 @@ export async function GET(): Promise<Response> {
     const launchRaw = launchMap.get(badge) ?? null;
 
     const pgrRaw = pgr?.raw ?? null;
-    const pgrNorm = pgrRaw !== null ? (pgrRaw / PGR_MAX) * 100 : null;
+    const pgrNorm = pgrRaw !== null && pgrMax ? (pgrRaw / pgrMax) * 100 : null;
     const tttNorm = tttRaw !== null && tttMax ? (tttRaw / tttMax) * 100 : null;
     const launchNorm = launchRaw !== null && launchMax ? (launchRaw / launchMax) * 100 : null;
 
@@ -105,6 +104,6 @@ export async function GET(): Promise<Response> {
 
   return Response.json({
     results,
-    meta: { tttMax, launchMax, pgrMax: PGR_MAX, lastUpdated: new Date().toISOString() },
+    meta: { tttMax, launchMax, pgrMax, lastUpdated: new Date().toISOString() },
   } satisfies ResultsPayload);
 }

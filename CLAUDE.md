@@ -75,9 +75,9 @@ Used for: auto-populating TTT SubmitTab team columns. Host only needs to tap ⇄
 ## Scoring & Normalization
 
 ```
-PGR:    score / 24 × 100          (fixed 24-pt max)
-TTT:    score / tttMax × 100      (tttMax = highest actual score across waves)
-Launch: total / launchMax × 100   (launchMax = highest team total across waves)
+PGR:    score / pgrMax × 100      (pgrMax = highest actual raw score across all waves)
+TTT:    score / tttMax × 100      (tttMax = highest actual score across all waves)
+Launch: total / launchMax × 100   (launchMax = highest team total across all waves)
 ```
 
 Launch team total = `round1Feet × 5 + round2Total` (null if either missing).

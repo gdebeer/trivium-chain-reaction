@@ -199,9 +199,7 @@ function TeamRow({
                 : 'bg-gray-100 text-gray-500 border border-dashed border-gray-300'
             }`}
           >
-            {team?.badges.length
-              ? `${team.badges.length} assigned`
-              : 'Edit badges'}
+            Edit badges
           </button>
         </div>
         <div className="text-right flex-shrink-0 ml-2">

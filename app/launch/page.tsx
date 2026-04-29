@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { LaunchState, LaunchTeam, TeamColor } from '@/lib/launch-types';
 import { TEAM_COLORS, TEAM_COLORS_STYLE, launchTeamTotal } from '@/lib/launch-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings } from '@/lib/badge-list';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings, launchDefaultBadges } from '@/lib/badge-list';
 import type { UsedBadges } from '@/app/api/badges/route';
 
 async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
@@ -33,7 +33,9 @@ function BadgeModal({
   onCancel: () => void;
 }) {
   const style = TEAM_COLORS_STYLE[color];
-  const [badges, setBadges] = useState<string[]>([...initial, '', '', '', ''].slice(0, 4));
+  // Pre-fill from schedule if no badges confirmed yet; host adjusts for no-shows day-of
+  const seed = initial.length > 0 ? initial : launchDefaultBadges(wave, color);
+  const [badges, setBadges] = useState<string[]>([...seed, '', '', '', ''].slice(0, 4));
   const [saving, setSaving] = useState(false);
   const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
 
@@ -184,10 +186,12 @@ function TeamRow({
             className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
               team?.badges.length
                 ? `${style.bg} ${style.text} border ${style.border}`
-                : 'bg-gray-100 text-gray-400 border border-gray-200'
+                : 'bg-gray-100 text-gray-500 border border-dashed border-gray-300'
             }`}
           >
-            {team?.badges.length ? `${team.badges.length} badges` : '+ badges'}
+            {team?.badges.length
+              ? `${team.badges.length} badges`
+              : `${launchDefaultBadges(wave, color).length} expected`}
           </button>
         </div>
         <div className="text-right flex-shrink-0 ml-2">

@@ -51,10 +51,21 @@ export function badgeWarnings(badges: string[], statuses: BadgeStatus[]): string
   return lines;
 }
 
-// ─── Station routing ──────────────────────────────────────────────────────────
-// First digit of badge → which wave (1/2/3) that badge attends at each station.
-// Schedule: 1=PGR→TTT→Launch  2=Launch→PGR→TTT  3=TTT→Launch→PGR
-//           4=PGR→Launch→TTT  5=Launch→TTT→PGR  6=TTT→PGR→Launch
+// ─── Badge digit rules ────────────────────────────────────────────────────────
+//
+// DIGIT 1 (first digit) → station visit order / wave assignment
+//   Schedule: 1=PGR→TTT→Launch  2=Launch→PGR→TTT  3=TTT→Launch→PGR
+//             4=PGR→Launch→TTT  5=Launch→TTT→PGR  6=TTT→PGR→Launch
+//
+// DIGIT 2 (middle digit) → initial Launch team assignment
+//   1=Red  2=Orange  3=Green  4=Blue  5=Purple
+//   (Most likely to change due to no-shows; defaults used until host adjusts)
+//
+// DIGIT 3 (last digit) → TTT team assignment
+//   Odd = Team X,  Even = Team O
+//
+// To update badge numbers: replace VALID_BADGE_SET above.
+// All rules derive automatically from the badge number — no other code changes needed.
 
 const STATION_WAVE_FOR_DIGIT: Record<string, Record<'pgr' | 'ttt' | 'launch', 1 | 2 | 3>> = {
   '1': { pgr: 1, ttt: 2, launch: 3 },
@@ -96,7 +107,7 @@ export function badgeWaveWarnings(
 
 /**
  * Returns the pre-determined X and O teams for a TTT wave.
- * X = odd last digit, O = even last digit.
+ * Rule: odd last digit → X, even last digit → O.
  * Based entirely on VALID_BADGE_SET + routing schedule — no manual entry needed.
  */
 export function tttDefaultTeams(wave: 1 | 2 | 3): { x: string[]; o: string[] } {
@@ -109,4 +120,31 @@ export function tttDefaultTeams(wave: 1 | 2 | 3): { x: string[]; o: string[] } {
     else o.push(badge);
   }
   return { x: x.sort(), o: o.sort() };
+}
+
+// ─── Launch pre-computed teams ────────────────────────────────────────────────
+
+// Second digit → Launch team colour
+// 1=Red  2=Orange  3=Green  4=Blue  5=Purple
+const LAUNCH_TEAM_DIGIT: Record<'Red' | 'Orange' | 'Green' | 'Blue' | 'Purple', string> = {
+  Red: '1', Orange: '2', Green: '3', Blue: '4', Purple: '5',
+};
+
+/**
+ * Returns the scheduled badges for a Launch team in a given wave.
+ * Rule: second digit matches the team colour digit above.
+ * These are defaults — the host adjusts day-of if people no-show or switch.
+ */
+export function launchDefaultBadges(
+  wave: 1 | 2 | 3,
+  color: 'Red' | 'Orange' | 'Green' | 'Blue' | 'Purple',
+): string[] {
+  const teamDigit = LAUNCH_TEAM_DIGIT[color];
+  const result: string[] = [];
+  for (const badge of VALID_BADGE_SET) {
+    if (getExpectedWave(badge, 'launch') !== wave) continue;
+    if (badge[1] !== teamDigit) continue;
+    result.push(badge);
+  }
+  return result.sort();
 }

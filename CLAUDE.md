@@ -49,9 +49,16 @@ Participant display for TTT: `/display`
 | 5 | 3 | 2 | 1 |
 | 6 | 2 | 1 | 3 |
 
-Used for: wave-mismatch warnings at PGR and Launch; pre-computing TTT team rosters.
+Used for: wave-mismatch warnings at PGR and Launch; pre-computing TTT and Launch team rosters.
 
-**Rule 2 — Last digit → TTT team (odd/even)**
+**Rule 2 — Second (middle) digit → initial Launch team assignment**
+- `1` = Red · `2` = Orange · `3` = Green · `4` = Blue · `5` = Purple
+- These are *defaults* — most likely to change due to no-shows. Host adjusts in the badge modal day-of.
+- Team cards show "N expected" (dashed border) when not yet confirmed; confirmed shows solid with count.
+
+Used for: pre-populating each Launch team's badge modal when no confirmed data exists yet.
+
+**Rule 3 — Last digit → TTT team (odd/even)**
 - Odd last digit → **Team X**
 - Even last digit → **Team O**
 

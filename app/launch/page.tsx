@@ -185,9 +185,9 @@ function TeamRow({
   const hasData = !!(feet || r2);
 
   return (
-    <div className={`rounded-2xl border-2 px-3 py-3 transition-colors ${hasData ? `${style.bg} ${style.border}` : 'bg-white border-gray-200'}`}>
+    <div className={`rounded-2xl border-2 px-3 py-2 transition-colors ${hasData ? `${style.bg} ${style.border}` : 'bg-white border-gray-200'}`}>
       {/* Top row: color + badges + total */}
-      <div className="flex items-center justify-between mb-2.5">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-3 h-3 rounded-full flex-shrink-0 ${style.dot}`} />
           <span className={`font-bold text-sm ${hasData ? style.text : 'text-gray-500'}`}>{color}</span>
@@ -212,7 +212,7 @@ function TeamRow({
       </div>
 
       {/* Score inputs */}
-      <div className="flex gap-2 items-start">
+      <div className="flex gap-2 items-end">
         {/* Round 1 */}
         <div className="flex-1">
           <p className="text-xs text-gray-400 mb-1 leading-none">R1 distance</p>
@@ -226,29 +226,31 @@ function TeamRow({
               min="0"
               step="0.5"
               placeholder="0"
-              className={`w-full border rounded-xl px-2.5 py-2 text-base font-mono text-center focus:outline-none focus:ring-2 ${style.ring} bg-white ${hasData ? style.border : 'border-gray-200'}`}
+              className={`w-full border rounded-xl px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${style.ring} bg-white ${hasData ? style.border : 'border-gray-200'}`}
             />
             <span className="text-xs text-gray-400 flex-shrink-0">ft</span>
+            {r1Pts !== null && (
+              <span className={`text-xs font-semibold flex-shrink-0 ${style.text}`}>{r1Pts} pts</span>
+            )}
           </div>
-          {r1Pts !== null && (
-            <p className={`text-xs mt-1 text-right font-semibold ${style.text}`}>{r1Pts} pts</p>
-          )}
         </div>
 
         {/* Round 2 */}
         <div className="flex-1">
           <p className="text-xs text-gray-400 mb-1 leading-none">R2 target</p>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={r2}
-            onChange={e => { setR2(e.target.value); scheduleSave(feet, e.target.value); }}
-            onBlur={() => save(feet, r2)}
-            min="0"
-            placeholder="0"
-            className={`w-full border rounded-xl px-2.5 py-2 text-base font-mono text-center focus:outline-none focus:ring-2 ${style.ring} bg-white ${hasData ? style.border : 'border-gray-200'}`}
-          />
-          <p className="text-xs mt-1 text-right text-gray-400">pts</p>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              inputMode="numeric"
+              value={r2}
+              onChange={e => { setR2(e.target.value); scheduleSave(feet, e.target.value); }}
+              onBlur={() => save(feet, r2)}
+              min="0"
+              placeholder="0"
+              className={`w-full border rounded-xl px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:ring-2 ${style.ring} bg-white ${hasData ? style.border : 'border-gray-200'}`}
+            />
+            <span className="text-xs text-gray-400 flex-shrink-0">pts</span>
+          </div>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { LaunchState, LaunchTeam, TeamColor } from '@/lib/launch-types';
 import { TEAM_COLORS, TEAM_COLORS_STYLE, launchTeamTotal } from '@/lib/launch-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings } from '@/lib/badge-list';
 import type { UsedBadges } from '@/app/api/badges/route';
 
 async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
@@ -51,7 +51,10 @@ function BadgeModal({
   }
 
   const badgeStatuses = badges.map(b => getBadgeStatus(b, badges, usedInStation));
-  const warnings = badgeWarnings(badges, badgeStatuses);
+  const warnings = [
+    ...badgeWarnings(badges, badgeStatuses),
+    ...badgeWaveWarnings(badges, wave, 'launch'),
+  ];
 
   async function handleSave() {
     const valid = badges.map(b => b.trim()).filter(Boolean);

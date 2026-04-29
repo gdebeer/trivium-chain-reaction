@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { PGREntry, PGRState } from '@/lib/pgr-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings } from '@/lib/badge-list';
 import type { UsedBadges } from '@/app/api/badges/route';
 
 // ─── API helper ───────────────────────────────────────────────────────────────
@@ -55,7 +55,10 @@ function EntryForm({
 
   const formBadges = [b0, b1, b2];
   const badgeStatuses = formBadges.map(b => getBadgeStatus(b, formBadges, usedInStation));
-  const warnings = badgeWarnings(formBadges, badgeStatuses);
+  const warnings = [
+    ...badgeWarnings(formBadges, badgeStatuses),
+    ...badgeWaveWarnings(formBadges, wave, 'pgr'),
+  ];
 
   async function handleSave() {
     const badges = [b0, b1, b2].map(s => s.trim()).filter(Boolean);

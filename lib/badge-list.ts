@@ -50,3 +50,44 @@ export function badgeWarnings(badges: string[], statuses: BadgeStatus[]): string
   });
   return lines;
 }
+
+// ─── Station routing ──────────────────────────────────────────────────────────
+// First digit of badge → which wave (1/2/3) that badge attends at each station.
+// Schedule: 1=PGR→TTT→Launch  2=Launch→PGR→TTT  3=TTT→Launch→PGR
+//           4=PGR→Launch→TTT  5=Launch→TTT→PGR  6=TTT→PGR→Launch
+
+const STATION_WAVE_FOR_DIGIT: Record<string, Record<'pgr' | 'ttt' | 'launch', 1 | 2 | 3>> = {
+  '1': { pgr: 1, ttt: 2, launch: 3 },
+  '2': { pgr: 2, ttt: 3, launch: 1 },
+  '3': { pgr: 3, ttt: 1, launch: 2 },
+  '4': { pgr: 1, ttt: 3, launch: 2 },
+  '5': { pgr: 3, ttt: 2, launch: 1 },
+  '6': { pgr: 2, ttt: 1, launch: 3 },
+};
+
+/** Returns the expected wave for a badge at a given station, or null if unknown. */
+export function getExpectedWave(badge: string, station: 'pgr' | 'ttt' | 'launch'): 1 | 2 | 3 | null {
+  const digit = badge.trim()[0];
+  return STATION_WAVE_FOR_DIGIT[digit]?.[station] ?? null;
+}
+
+/**
+ * Warning lines for badges that appear in the wrong wave at this station.
+ * Warnings only — never blocks saving.
+ */
+export function badgeWaveWarnings(
+  badges: string[],
+  wave: 1 | 2 | 3,
+  station: 'pgr' | 'ttt' | 'launch',
+): string[] {
+  const lines: string[] = [];
+  for (const b of badges) {
+    const trimmed = b.trim();
+    if (!trimmed) continue;
+    const expected = getExpectedWave(trimmed, station);
+    if (expected !== null && expected !== wave) {
+      lines.push(`${trimmed} is expected in Wave ${expected} at this station`);
+    }
+  }
+  return lines;
+}

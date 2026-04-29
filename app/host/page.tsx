@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
-import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings } from '@/lib/badge-list';
+import { getBadgeStatus, BADGE_INPUT_CLASS, badgeWarnings, badgeWaveWarnings } from '@/lib/badge-list';
 import type { UsedBadges } from '@/app/api/badges/route';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
@@ -597,8 +597,8 @@ function SubmitTab({ gameScores }: { gameScores: { x: number; o: number } }) {
   const allBadgesInWave = [...xBadges, ...oBadges];
   const xStatuses = xBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
   const oStatuses = oBadges.map(b => getBadgeStatus(b, allBadgesInWave, usedInStation));
-  const xWarnings = badgeWarnings(xBadges, xStatuses);
-  const oWarnings = badgeWarnings(oBadges, oStatuses);
+  const xWarnings = [...badgeWarnings(xBadges, xStatuses), ...badgeWaveWarnings(xBadges, wave, 'ttt')];
+  const oWarnings = [...badgeWarnings(oBadges, oStatuses), ...badgeWaveWarnings(oBadges, wave, 'ttt')];
 
   const badgeInputs = (team: 'x' | 'o') => {
     const badges = team === 'x' ? xBadges : oBadges;

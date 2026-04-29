@@ -35,7 +35,7 @@ function EntryForm({
   const [b1, setB1] = useState(initial?.badges[1] ?? '');
   const [b2, setB2] = useState(initial?.badges[2] ?? '');
   const [egypt, setEgypt] = useState(initial?.egypt?.toString() ?? '');
-  const [caribbeans, setCaribbeans] = useState(initial?.caribbeans?.toString() ?? '');
+  const [caribbean, setCaribbean] = useState(initial?.caribbean?.toString() ?? '');
   const [hollywood, setHollywood] = useState(initial?.hollywood?.toString() ?? '');
   const [australia, setAustralia] = useState(initial?.australia?.toString() ?? '');
   const [order, setOrder] = useState(initial?.order?.toString() ?? '');
@@ -66,7 +66,7 @@ function EntryForm({
     valid: (n: number) => boolean; hint: string;
   }[] = [
     { label: 'Egypt',      val: egypt,      setter: setEgypt,      valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
-    { label: 'Caribbeans', val: caribbeans, setter: setCaribbeans, valid: n => n === 0 || n === 6,                      hint: '0 or 6' },
+    { label: 'Caribbean',  val: caribbean,  setter: setCaribbean,  valid: n => n === 0 || n === 6,                      hint: '0 or 6' },
     { label: 'Hollywood',  val: hollywood,  setter: setHollywood,  valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
     { label: 'Australia',  val: australia,  setter: setAustralia,  valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
   ];
@@ -77,14 +77,14 @@ function EntryForm({
   async function handleSave() {
     const badges = [b0, b1, b2].map(s => s.trim()).filter(Boolean);
     if (badges.length < 2) { setError('Enter at least 2 badge numbers.'); return; }
-    if (!egypt || !caribbeans || !hollywood || !australia || !order) {
+    if (!egypt || !caribbean || !hollywood || !australia || !order) {
       setError('All score and order fields are required.'); return;
     }
     const entry = {
       wave,
       badges,
       egypt: Number(egypt),
-      caribbeans: Number(caribbeans),
+      caribbean: Number(caribbean),
       hollywood: Number(hollywood),
       australia: Number(australia),
       order: Number(order),
@@ -366,7 +366,7 @@ export default function PGRPage() {
               <div className="grid grid-cols-4 gap-2">
                 {([
                   ['Egypt', entry.egypt],
-                  ['Caribbeans', entry.caribbeans],
+                  ['Caribbean', entry.caribbean],
                   ['Hollywood', entry.hollywood],
                   ['Australia', entry.australia],
                 ] as [string, number][]).map(([label, val]) => (

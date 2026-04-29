@@ -1,7 +1,7 @@
 import type { PGREntry } from './pgr-types';
 
 const SHEET_NAME = 'Pretty Good Race';
-const HEADERS = ['Wave', 'Badge 1', 'Badge 2', 'Badge 3', 'Egypt', 'Caribbeans', 'Hollywood', 'Australia', 'Finish Order'];
+const HEADERS = ['Wave', 'Badge 1', 'Badge 2', 'Badge 3', 'Egypt', 'Caribbean', 'Hollywood', 'Australia', 'Finish Order'];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSheetsClient(sheetId: string): { sheets: any; sheetId: string } {
@@ -49,7 +49,7 @@ export async function appendEntriesToSheet(sheetId: string, entries: PGREntry[])
     e.badges[1] ?? '',
     e.badges[2] ?? '',
     e.egypt,
-    e.caribbeans,
+    e.caribbean,
     e.hollywood,
     e.australia,
     e.order,

@@ -34,7 +34,7 @@ export async function GET(): Promise<Response> {
   // only if data entry error; take the first match)
   const pgrMap = new Map<string, { raw: number; order: number }>();
   for (const entry of pgr.entries) {
-    const raw = entry.egypt + entry.caribbeans + entry.hollywood + entry.australia;
+    const raw = entry.egypt + entry.caribbean + entry.hollywood + entry.australia;
     for (const badge of entry.badges) {
       if (!pgrMap.has(badge)) pgrMap.set(badge, { raw, order: entry.order });
     }

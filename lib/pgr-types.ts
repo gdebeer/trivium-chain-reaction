@@ -3,7 +3,7 @@ export interface PGREntry {
   wave: 1 | 2 | 3;
   badges: string[];
   egypt: number;
-  caribbeans: number;
+  caribbean: number;
   hollywood: number;
   australia: number;
   order: number;

@@ -30,6 +30,14 @@ export async function getState(): Promise<GameState> {
   return mem;
 }
 
+/** Resets display state (status → waiting, currentWord → null) while keeping rounds intact. */
+export async function resetDisplayState(): Promise<void> {
+  const state = await getState();
+  const next: GameState = { ...state, status: 'waiting', currentWord: null };
+  const r = redis();
+  if (r) { await r.set(KEY, next); } else { mem = next; }
+}
+
 export async function applyAction(action: GameAction): Promise<GameState> {
   const state = await getState();
   let next: GameState;

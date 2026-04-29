@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import type { BadgeResult, ResultsPayload } from '@/app/api/results/route';
 import { BADGE_NAMES } from '@/lib/badge-list';
 
+type View = 'scaled' | 'raw';
+
 function fmt(n: number | null) {
   if (n === null) return '—';
-  return n.toFixed(1);
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
 function MedalIcon({ rank }: { rank: number }) {
@@ -16,11 +18,13 @@ function MedalIcon({ rank }: { rank: number }) {
   return <span className="w-7 h-7 rounded-full bg-gray-100 text-gray-500 text-sm font-bold flex items-center justify-center">{rank}</span>;
 }
 
-function ScorePill({ label, norm, color }: { label: string; norm: number | null; color: string }) {
+function ScorePill({
+  label, value, hasData, color,
+}: { label: string; value: string; hasData: boolean; color: string }) {
   return (
-    <div className={`flex-1 rounded-xl py-2 text-center ${norm !== null ? color : 'bg-gray-50'}`}>
+    <div className={`flex-1 rounded-xl py-2 text-center ${hasData ? color : 'bg-gray-50'}`}>
       <p className="text-xs text-current opacity-60 leading-none mb-0.5">{label}</p>
-      <p className="text-sm font-bold leading-none">{fmt(norm)}</p>
+      <p className="text-sm font-bold leading-none">{value}</p>
     </div>
   );
 }
@@ -29,6 +33,7 @@ export default function ResultsPage() {
   const [data, setData] = useState<ResultsPayload | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [view, setView] = useState<View>('scaled');
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setRefreshing(true);
@@ -70,19 +75,43 @@ export default function ResultsPage() {
           </button>
         </div>
 
-        {/* Normalization status */}
-        <div className="flex gap-2 mt-4">
-          {[
-            ['TTT', meta.tttMax !== null, meta.tttMax !== null ? `÷ ${meta.tttMax}` : 'no data'],
-            ['PGR', true, `÷ ${meta.pgrMax}`],
-            ['Launch', meta.launchMax !== null, meta.launchMax !== null ? `÷ ${meta.launchMax}` : 'no data'],
-          ].map(([label, ready, sub]) => (
-            <div key={label as string} className={`flex-1 rounded-xl px-3 py-2 text-center ${ready ? 'bg-gray-800' : 'bg-gray-900 border border-gray-800'}`}>
-              <p className={`text-xs font-bold ${ready ? 'text-white' : 'text-gray-600'}`}>{label as string}</p>
-              <p className={`text-xs mt-0.5 ${ready ? 'text-gray-400' : 'text-gray-700'}`}>{sub as string}</p>
-            </div>
+        {/* Scaled / Raw toggle */}
+        <div className="flex mt-4 bg-gray-900 rounded-xl p-1 gap-1">
+          {(['scaled', 'raw'] as View[]).map(v => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                view === v ? 'bg-gray-600 text-white' : 'text-gray-500 active:text-gray-400'
+              }`}
+            >
+              {v === 'scaled' ? 'Scaled (ranked)' : 'Raw scores'}
+            </button>
           ))}
         </div>
+
+        {/* Normalization denominators — scaled mode only */}
+        {view === 'scaled' && (
+          <div className="flex gap-2 mt-3">
+            {[
+              ['TTT', meta.tttMax !== null, meta.tttMax !== null ? `÷ ${meta.tttMax}` : 'no data'],
+              ['PGR', meta.pgrMax !== null, meta.pgrMax !== null ? `÷ ${meta.pgrMax}` : 'no data'],
+              ['Launch', meta.launchMax !== null, meta.launchMax !== null ? `÷ ${meta.launchMax}` : 'no data'],
+            ].map(([label, ready, sub]) => (
+              <div key={label as string} className={`flex-1 rounded-xl px-3 py-2 text-center ${ready ? 'bg-gray-800' : 'bg-gray-900 border border-gray-800'}`}>
+                <p className={`text-xs font-bold ${ready ? 'text-white' : 'text-gray-600'}`}>{label as string}</p>
+                <p className={`text-xs mt-0.5 ${ready ? 'text-gray-400' : 'text-gray-700'}`}>{sub as string}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Raw mode explanation */}
+        {view === 'raw' && (
+          <p className="text-xs text-gray-600 mt-3">
+            Actual game scores — ranking is still determined by scaled scores.
+          </p>
+        )}
       </header>
 
       {/* Leaderboard */}
@@ -98,16 +127,21 @@ export default function ResultsPage() {
             {displayed.map((r, i) => {
               const rank = i + 1;
               const isTop3 = rank <= 3;
+
+              const rankBg =
+                rank === 1 ? 'bg-yellow-500/10 border border-yellow-500/30' :
+                rank === 2 ? 'bg-gray-400/10 border border-gray-400/20' :
+                rank === 3 ? 'bg-orange-700/10 border border-orange-700/20' :
+                'bg-gray-900 border border-gray-800';
+
+              const totalColor =
+                rank === 1 ? 'text-yellow-400' :
+                rank === 2 ? 'text-gray-300' :
+                rank === 3 ? 'text-orange-400' :
+                'text-white';
+
               return (
-                <div
-                  key={r.badge}
-                  className={`rounded-2xl px-4 py-3.5 ${
-                    rank === 1 ? 'bg-yellow-500/10 border border-yellow-500/30' :
-                    rank === 2 ? 'bg-gray-400/10 border border-gray-400/20' :
-                    rank === 3 ? 'bg-orange-700/10 border border-orange-700/20' :
-                    'bg-gray-900 border border-gray-800'
-                  }`}
-                >
+                <div key={r.badge} className={`rounded-2xl px-4 py-3.5 ${rankBg}`}>
                   <div className="flex items-center gap-3 mb-2.5">
                     <MedalIcon rank={rank} />
                     <div className="flex-1 min-w-0">
@@ -116,24 +150,29 @@ export default function ResultsPage() {
                       </p>
                       <p className="text-xs text-gray-500 font-mono leading-none mt-0.5">#{r.badge}</p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className={`text-2xl font-black tabular-nums ${
-                        rank === 1 ? 'text-yellow-400' :
-                        rank === 2 ? 'text-gray-300' :
-                        rank === 3 ? 'text-orange-400' :
-                        'text-white'
-                      }`}>
-                        {r.total.toFixed(1)}
-                      </p>
-                      <p className="text-xs text-gray-600 leading-none">/ 300</p>
-                    </div>
+                    {view === 'scaled' && (
+                      <div className="text-right flex-shrink-0">
+                        <p className={`text-2xl font-black tabular-nums ${totalColor}`}>
+                          {r.total.toFixed(1)}
+                        </p>
+                        <p className="text-xs text-gray-600 leading-none">/ 300</p>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex gap-1.5">
-                    <ScorePill label="TTT" norm={r.tttNorm} color="bg-indigo-950 text-indigo-300" />
-                    <ScorePill label="PGR" norm={r.pgrNorm} color="bg-violet-950 text-violet-300" />
-                    <ScorePill label="Launch" norm={r.launchNorm} color="bg-orange-950 text-orange-300" />
-                  </div>
+                  {view === 'scaled' ? (
+                    <div className="flex gap-1.5">
+                      <ScorePill label="TTT"    value={fmt(r.tttNorm)}    hasData={r.tttNorm !== null}    color="bg-indigo-950 text-indigo-300" />
+                      <ScorePill label="PGR"    value={fmt(r.pgrNorm)}    hasData={r.pgrNorm !== null}    color="bg-violet-950 text-violet-300" />
+                      <ScorePill label="Launch" value={fmt(r.launchNorm)} hasData={r.launchNorm !== null} color="bg-orange-950 text-orange-300" />
+                    </div>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <ScorePill label="TTT"    value={fmt(r.tttRaw)}    hasData={r.tttRaw !== null}    color="bg-indigo-950 text-indigo-300" />
+                      <ScorePill label="PGR"    value={fmt(r.pgrRaw)}    hasData={r.pgrRaw !== null}    color="bg-violet-950 text-violet-300" />
+                      <ScorePill label="Launch" value={fmt(r.launchRaw)} hasData={r.launchRaw !== null} color="bg-orange-950 text-orange-300" />
+                    </div>
+                  )}
 
                   {r.pgrOrder !== null && r.total > 0 && (
                     <p className="text-xs text-gray-700 mt-1.5 text-right">

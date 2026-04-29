@@ -139,7 +139,7 @@ function TeamRow({
     saveTimer.current = setTimeout(() => save(nextFeet, nextR2), 600);
   }
 
-  const r1Pts = feet ? Number(feet) * 5 : null;
+  const r1Pts = feet.trim() !== '' ? Number(feet) * 5 : null;
   const total = r1Pts !== null && r2 ? r1Pts + Number(r2) : null;
   const hasData = !!(feet || r2);
 
@@ -171,7 +171,7 @@ function TeamRow({
       </div>
 
       {/* Score inputs */}
-      <div className="flex gap-2 items-end">
+      <div className="flex gap-2 items-start">
         {/* Round 1 */}
         <div className="flex-1">
           <p className="text-xs text-gray-400 mb-1 leading-none">R1 distance</p>

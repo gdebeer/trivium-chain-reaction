@@ -112,6 +112,122 @@ function RoundEditor({ initial, onSave, onCancel }: RoundEditorProps) {
   );
 }
 
+// ─── TTT Badge modal ─────────────────────────────────────────────────────────
+
+function TTTBadgeModal({
+  wave,
+  tttState,
+  currentScores,
+  onSave,
+  onCancel,
+}: {
+  wave: 1 | 2 | 3;
+  tttState: TTTState | null;
+  currentScores: { x: number; o: number };
+  onSave: (next: TTTState) => void;
+  onCancel: () => void;
+}) {
+  const savedWave = tttState?.waves.find(wv => wv.wave === wave);
+  const defaults = tttDefaultTeams(wave);
+
+  const [xBadges, setXBadges] = useState<string[]>(
+    savedWave?.xBadges.length ? [...savedWave.xBadges] : [...defaults.x]
+  );
+  const [oBadges, setOBadges] = useState<string[]>(
+    savedWave?.oBadges.length ? [...savedWave.oBadges] : [...defaults.o]
+  );
+  const [saving, setSaving] = useState(false);
+
+  function defaultTeam(badge: string): 'x' | 'o' {
+    const last = parseInt(badge.at(-1) ?? '', 10);
+    return !isNaN(last) && last % 2 !== 0 ? 'x' : 'o';
+  }
+
+  function moveBadge(b: string, from: 'x' | 'o') {
+    if (from === 'x') {
+      setXBadges(p => p.filter(x => x !== b));
+      setOBadges(p => [...p, b].sort());
+    } else {
+      setOBadges(p => p.filter(x => x !== b));
+      setXBadges(p => [...p, b].sort());
+    }
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const waveData: TTTWave = {
+        wave, xBadges, oBadges,
+        // Preserve whatever scores are currently in the editor
+        xScore: currentScores.x,
+        oScore: currentScores.o,
+        submittedAt: savedWave?.submittedAt,
+      };
+      const next = await tttApi<TTTState>('/api/ttt/waves', 'POST', waveData);
+      onSave(next);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const teamCol = (team: 'x' | 'o') => {
+    const badges = team === 'x' ? xBadges : oBadges;
+    const label = team === 'x' ? 'Team X' : 'Team O';
+    const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
+    const borderColor = team === 'x' ? 'border-orange-100' : 'border-sky-100';
+    return (
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-bold ${textColor} mb-1.5`}>{label}</p>
+        <div className={`flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border ${borderColor} min-h-16`}>
+          {badges.map(b => {
+            const isOverride = defaultTeam(b) !== team;
+            return (
+              <button
+                key={b}
+                onClick={() => moveBadge(b, team)}
+                title={`Move to ${team === 'x' ? 'O' : 'X'}`}
+                className={`flex items-center gap-0.5 px-1.5 py-1 rounded-lg text-xs font-mono active:opacity-70 ${
+                  isOverride
+                    ? 'border-2 border-amber-400 bg-amber-50 font-bold'
+                    : 'border border-gray-200 bg-white'
+                }`}
+              >
+                {b} <span className="text-gray-400 text-xs">⇄</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onCancel}>
+      <div
+        className="w-full bg-white rounded-t-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto max-w-2xl mx-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-900">Wave {wave} — Badge Assignments</h2>
+          <button onClick={onCancel} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+        </div>
+        <p className="text-xs text-gray-400 -mt-2">Tap a badge to move it to the other team. Amber = moved from default assignment.</p>
+        <div className="flex gap-3">
+          {teamCol('x')}
+          {teamCol('o')}
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full bg-indigo-600 text-white font-semibold rounded-xl py-3 text-sm active:bg-indigo-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save Badge Assignments'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Control tab ─────────────────────────────────────────────────────────────
 
 interface ControlTabProps {
@@ -128,14 +244,22 @@ function ControlTab({ state, onAction }: ControlTabProps) {
   const [tttState, setTttState] = useState<TTTState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState('');
+  const [showBadges, setShowBadges] = useState(false);
 
   useEffect(() => {
-    tttApi<TTTState>('/api/ttt/waves').then(setTttState);
+    tttApi<TTTState>('/api/ttt/waves').then(s => {
+      setTttState(s);
+      // Pre-load scores for wave 1 if already saved
+      const saved = s.waves.find(wv => wv.wave === 1);
+      if (saved) setScores({ x: saved.xScore, o: saved.oScore });
+    });
   }, []);
 
   function switchWave(w: 1 | 2 | 3) {
     setWave(w);
-    setScores({ x: 0, o: 0 });
+    // Restore saved scores for the target wave, or 0 if not yet submitted
+    const saved = tttState?.waves.find(wv => wv.wave === w);
+    setScores({ x: saved?.xScore ?? 0, o: saved?.oScore ?? 0 });
     setSubmitMsg('');
   }
 
@@ -324,7 +448,15 @@ function ControlTab({ state, onAction }: ControlTabProps) {
 
           {/* Scoring */}
           <div className="px-4 pb-4 flex-shrink-0">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Score — Wave {wave}</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Score — Wave {wave}</p>
+              <button
+                onClick={() => setShowBadges(true)}
+                className="text-xs text-indigo-600 font-semibold active:opacity-70"
+              >
+                Edit Badges ›
+              </button>
+            </div>
             <div className="flex gap-3 mb-2">
               {([['x', 'X', 'text-orange-600', 'bg-orange-600', 'border-orange-200'],
                  ['o', 'O', 'text-sky-400',    'bg-sky-400',    'border-sky-200'  ]] as const).map(
@@ -412,6 +544,16 @@ function ControlTab({ state, onAction }: ControlTabProps) {
             );
           })()}
         </>
+      )}
+
+      {showBadges && (
+        <TTTBadgeModal
+          wave={wave}
+          tttState={tttState}
+          currentScores={scores}
+          onSave={next => { setTttState(next); setShowBadges(false); }}
+          onCancel={() => setShowBadges(false)}
+        />
       )}
     </div>
   );

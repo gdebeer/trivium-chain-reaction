@@ -101,19 +101,29 @@ function BadgeModal({
 
         <div className="grid grid-cols-2 gap-2">
           {badges.map((b, i) => (
-            <input
-              key={i}
-              type="text"
-              inputMode="numeric"
-              value={b}
-              onChange={e => setBadge(i, e.target.value)}
-              placeholder={i < 2 ? `Badge ${i + 1}` : `Badge ${i + 1} (optional)`}
-              className={`border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 ${style.ring} ${
-                i >= 2 && badgeStatuses[i] === 'empty'
-                  ? 'border-dashed border-gray-300 text-gray-500'
-                  : BADGE_INPUT_CLASS[badgeStatuses[i]]
-              }`}
-            />
+            <div key={i} className="relative">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={b}
+                onChange={e => setBadge(i, e.target.value)}
+                placeholder={i < 2 ? `Badge ${i + 1}` : `Badge ${i + 1} (optional)`}
+                className={`w-full border rounded-xl px-3 py-3 text-base font-mono focus:outline-none focus:ring-2 ${b.trim() ? 'pr-8' : ''} ${style.ring} ${
+                  i >= 2 && badgeStatuses[i] === 'empty'
+                    ? 'border-dashed border-gray-300 text-gray-500'
+                    : BADGE_INPUT_CLASS[badgeStatuses[i]]
+                }`}
+              />
+              {b.trim() && (
+                <button
+                  type="button"
+                  onClick={() => { if (confirm('Clear this badge?')) setBadge(i, ''); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 active:text-red-500 text-lg leading-none"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
         </div>
         {warnings.length > 0 && (

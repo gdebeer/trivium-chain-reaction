@@ -344,10 +344,9 @@ export default function PGRPage() {
                     </span>
                   )}
                 </div>
-                <div className="flex-shrink-0 text-center">
-                  <p className="text-xs text-gray-400 leading-none">Place</p>
-                  <p className="text-sm font-bold text-gray-700 leading-none mt-0.5">#{entry.order}</p>
-                </div>
+                <span className="flex-shrink-0 text-xs font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full mx-1">
+                  Place #{entry.order}
+                </span>
                 <div className="flex gap-1 flex-shrink-0">
                   <button
                     onClick={() => setEditingEntry(entry)}

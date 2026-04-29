@@ -334,21 +334,21 @@ export default function PGRPage() {
               </div>
 
               {/* Score grid */}
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-4 gap-2">
                 {([
                   ['Egypt', entry.egypt],
-                  ['Carib.', entry.caribbeans],
-                  ["H'wood", entry.hollywood],
-                  ['Aus.', entry.australia],
+                  ['Caribbeans', entry.caribbeans],
+                  ['Hollywood', entry.hollywood],
+                  ['Australia', entry.australia],
                 ] as [string, number][]).map(([label, val]) => (
-                  <div key={label} className="bg-gray-50 rounded-xl py-2 text-center">
-                    <p className="text-xs text-gray-400 leading-none mb-1">{label}</p>
-                    <p className="text-lg font-bold text-gray-800 leading-none">{val}</p>
+                  <div key={label} className="bg-gray-50 rounded-xl py-3 text-center">
+                    <p className="text-xs text-gray-400 leading-none mb-2">{label}</p>
+                    <p className="text-2xl font-bold text-gray-800 leading-none">{val}</p>
                   </div>
                 ))}
               </div>
 
-              <p className="text-xs text-gray-400 mt-2.5 text-right">
+              <p className="text-xs text-gray-400 mt-3 text-right">
                 Finish order: <span className="font-semibold text-gray-600">#{entry.order}</span>
               </p>
             </div>
@@ -375,21 +375,23 @@ export default function PGRPage() {
             {submitError}
           </p>
         )}
-        <button
-          onClick={handleSubmitWave}
-          disabled={submitting || waveEntries.length === 0}
-          className={`w-full rounded-2xl py-4 font-bold text-base transition-colors disabled:opacity-40 ${
-            waveAlreadySubmitted
-              ? 'bg-emerald-600 text-white active:bg-emerald-700'
-              : 'bg-indigo-600 text-white active:bg-indigo-700'
-          }`}
-        >
-          {submitting
-            ? 'Submitting…'
-            : waveAlreadySubmitted
-              ? `Resubmit Wave ${wave}`
-              : `Submit Wave ${wave} Scores`}
-        </button>
+        <div className="flex justify-center">
+          <button
+            onClick={handleSubmitWave}
+            disabled={submitting || waveEntries.length === 0}
+            className={`w-full max-w-sm rounded-2xl py-4 font-bold text-base transition-colors disabled:opacity-40 ${
+              waveAlreadySubmitted
+                ? 'bg-emerald-600 text-white active:bg-emerald-700'
+                : 'bg-indigo-600 text-white active:bg-indigo-700'
+            }`}
+          >
+            {submitting
+              ? 'Submitting…'
+              : waveAlreadySubmitted
+                ? `Resubmit Wave ${wave}`
+                : `Submit Wave ${wave} Scores`}
+          </button>
+        </div>
       </div>
 
       {/* Modals */}

@@ -356,18 +356,20 @@ export default function LaunchPage() {
       <div className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-8">
         {submitMsg && <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-4 py-2.5 mb-2 text-center font-medium">{submitMsg}</p>}
         {submitError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5 mb-2 text-center">{submitError}</p>}
-        <button
-          onClick={handleSubmitWave}
-          disabled={submitting || completeCount === 0}
-          className={`w-full rounded-2xl py-4 font-bold text-base transition-colors disabled:opacity-40 ${
-            waveSubmitted ? 'bg-emerald-600 text-white active:bg-emerald-700' : 'bg-orange-500 text-white active:bg-orange-600'
-          }`}
-        >
-          {submitting ? 'Submitting…' : waveSubmitted ? `Resubmit Wave ${wave}` : `Submit Wave ${wave} Scores`}
-          {completeCount > 0 && !submitting && (
-            <span className="ml-2 opacity-75 font-normal text-sm">({completeCount}/5)</span>
-          )}
-        </button>
+        <div className="flex justify-center">
+          <button
+            onClick={handleSubmitWave}
+            disabled={submitting || completeCount === 0}
+            className={`w-full max-w-sm rounded-2xl py-4 font-bold text-base transition-colors disabled:opacity-40 ${
+              waveSubmitted ? 'bg-emerald-600 text-white active:bg-emerald-700' : 'bg-orange-500 text-white active:bg-orange-600'
+            }`}
+          >
+            {submitting ? 'Submitting…' : waveSubmitted ? `Resubmit Wave ${wave}` : `Submit Wave ${wave} Scores`}
+            {completeCount > 0 && !submitting && (
+              <span className="ml-2 opacity-75 font-normal text-sm">({completeCount}/5)</span>
+            )}
+          </button>
+        </div>
       </div>
 
       {badgeColor && (

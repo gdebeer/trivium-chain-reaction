@@ -60,6 +60,20 @@ function EntryForm({
     ...badgeWaveWarnings(formBadges, wave, 'pgr'),
   ];
 
+  // ─── Score field definitions with per-field validation ───────────────────
+  const scoreFields: {
+    label: string; val: string; setter: (v: string) => void;
+    valid: (n: number) => boolean; hint: string;
+  }[] = [
+    { label: 'Egypt',      val: egypt,      setter: setEgypt,      valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
+    { label: 'Caribbeans', val: caribbeans, setter: setCaribbeans, valid: n => n === 0 || n === 6,                      hint: '0 or 6' },
+    { label: 'Hollywood',  val: hollywood,  setter: setHollywood,  valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
+    { label: 'Australia',  val: australia,  setter: setAustralia,  valid: n => Number.isInteger(n) && n >= 0 && n <= 6, hint: '0–6' },
+  ];
+  const scoreWarnings = scoreFields
+    .filter(f => f.val !== '' && !f.valid(Number(f.val)))
+    .map(f => `${f.label}: must be ${f.hint}`);
+
   async function handleSave() {
     const badges = [b0, b1, b2].map(s => s.trim()).filter(Boolean);
     if (badges.length < 2) { setError('Enter at least 2 badge numbers.'); return; }
@@ -143,25 +157,40 @@ function EntryForm({
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Event Scores</p>
             <div className="bg-gray-50 rounded-2xl divide-y divide-gray-100">
-              {([
-                ['Egypt', egypt, setEgypt],
-                ['Caribbeans', caribbeans, setCaribbeans],
-                ['Hollywood', hollywood, setHollywood],
-                ['Australia', australia, setAustralia],
-              ] as [string, string, (v: string) => void][]).map(([label, val, setter]) => (
-                <div key={label} className="flex items-center justify-between px-4 py-3">
-                  <label className="text-base font-medium text-gray-800">{label}</label>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={val}
-                    onChange={e => setter(e.target.value)}
-                    min="0"
-                    className="w-24 border border-gray-300 rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                </div>
-              ))}
+              {scoreFields.map(({ label, val, setter, valid, hint }) => {
+                const isInvalid = val !== '' && !valid(Number(val));
+                return (
+                  <div key={label} className="flex items-center justify-between px-4 py-3">
+                    <div className="min-w-0">
+                      <label className="text-base font-medium text-gray-800">{label}</label>
+                      <p className="text-xs text-gray-400 leading-none mt-0.5">{hint}</p>
+                    </div>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={val}
+                      onChange={e => setter(e.target.value)}
+                      min="0"
+                      max="6"
+                      className={`w-24 border rounded-xl px-3 py-2 text-base text-right font-mono focus:outline-none focus:ring-2 ${
+                        isInvalid
+                          ? 'border-red-400 ring-red-300 bg-red-50 text-red-700 focus:ring-red-400'
+                          : 'border-gray-300 focus:ring-indigo-500'
+                      }`}
+                    />
+                  </div>
+                );
+              })}
             </div>
+            {scoreWarnings.length > 0 && (
+              <ul className="mt-2 space-y-0.5">
+                {scoreWarnings.map(w => (
+                  <li key={w} className="text-xs text-red-600 flex items-start gap-1">
+                    <span>⚠</span><span>{w}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Finish order */}

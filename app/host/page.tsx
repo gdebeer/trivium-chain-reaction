@@ -245,9 +245,9 @@ function TTTBadgeModal({
     const textColor = team === 'x' ? 'text-orange-600' : 'text-sky-500';
     const borderColor = team === 'x' ? 'border-orange-100' : 'border-sky-100';
     return (
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col">
         <p className={`text-sm font-bold ${textColor} mb-1.5`}>{label}</p>
-        <div className={`flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border ${borderColor} min-h-16 mb-2`}>
+        <div className={`flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border ${borderColor} min-h-16 mb-2 flex-1`}>
           {badges.map(b => {
             const isOverride = defaultTeam(b) !== team;
             const chipBase = isOverride

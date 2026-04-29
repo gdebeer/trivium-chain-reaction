@@ -23,21 +23,21 @@ function BadgeModal({
   wave,
   color,
   initial,
-  onSave,
-  onCancel,
+  onUpdate,
+  onClose,
 }: {
   wave: 1 | 2 | 3;
   color: TeamColor;
   initial: string[];
-  onSave: (s: LaunchState) => void;
-  onCancel: () => void;
+  onUpdate: (s: LaunchState) => void;
+  onClose: () => void;
 }) {
   const style = TEAM_COLORS_STYLE[color];
-  // Pre-fill from schedule if no badges confirmed yet; host adjusts for no-shows day-of
   const seed = initial.length > 0 ? initial : launchDefaultBadges(wave, color);
   const [badges, setBadges] = useState<string[]>([...seed, '', '', '', ''].slice(0, 4));
-  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [usedInStation, setUsedInStation] = useState<Set<string>>(new Set());
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch('/api/badges')
@@ -48,8 +48,33 @@ function BadgeModal({
       });
   }, [initial]);
 
+  async function persist(current: string[]) {
+    const valid = current.map(b => b.trim()).filter(Boolean);
+    setSaveStatus('saving');
+    try {
+      const state = await api<LaunchState>('/api/launch/entries', 'POST', {
+        wave,
+        team: { color, badges: valid, round1Feet: undefined, round2Total: undefined },
+        badgesOnly: true,
+      });
+      onUpdate(state);
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    } catch {
+      setSaveStatus('idle');
+    }
+  }
+
   function setBadge(i: number, val: string) {
     const next = [...badges]; next[i] = val; setBadges(next);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => persist(next), 800);
+  }
+
+  function handleClose() {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    persist(badges);
+    onClose();
   }
 
   const badgeStatuses = badges.map(b => getBadgeStatus(b, badges, usedInStation));
@@ -58,28 +83,21 @@ function BadgeModal({
     ...badgeWaveWarnings(badges, wave, 'launch'),
   ];
 
-  async function handleSave() {
-    const valid = badges.map(b => b.trim()).filter(Boolean);
-    setSaving(true);
-    // Save whatever team data already exists, just updating badges
-    const state = await api<LaunchState>('/api/launch/entries', 'POST', {
-      wave,
-      team: { color, badges: valid, round1Feet: undefined, round2Total: undefined },
-      badgesOnly: true,
-    });
-    onSave(state);
-  }
-
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onCancel}>
-      <div className="w-full bg-white rounded-t-2xl p-5 space-y-4" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={handleClose}>
+      <div className="w-full bg-white rounded-t-2xl p-5 space-y-4 max-w-2xl mx-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`w-3.5 h-3.5 rounded-full ${style.dot}`} />
             <h2 className="text-lg font-bold text-gray-900">{color} Team Badges</h2>
           </div>
-          <button onClick={onCancel} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+          <div className="flex items-center gap-3">
+            {saveStatus === 'saving' && <span className="text-xs text-gray-400">Saving…</span>}
+            {saveStatus === 'saved'  && <span className="text-xs text-emerald-600 font-medium">Saved ✓</span>}
+            <button onClick={handleClose} className="text-gray-400 text-2xl leading-none w-8 h-8 flex items-center justify-center">×</button>
+          </div>
         </div>
+        <p className="text-xs text-gray-400 -mt-2">Changes save automatically. Close any time.</p>
 
         <div className="grid grid-cols-2 gap-2">
           {badges.map((b, i) => (
@@ -107,14 +125,6 @@ function BadgeModal({
             ))}
           </ul>
         )}
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className={`w-full ${style.dot} text-white font-semibold rounded-2xl py-3.5 text-base disabled:opacity-50 active:opacity-80`}
-        >
-          {saving ? 'Saving…' : 'Save Badges'}
-        </button>
       </div>
     </div>
   );
@@ -190,8 +200,8 @@ function TeamRow({
             }`}
           >
             {team?.badges.length
-              ? `${team.badges.length} badges`
-              : `${launchDefaultBadges(wave, color).length} expected`}
+              ? `${team.badges.length} assigned`
+              : 'Edit badges'}
           </button>
         </div>
         <div className="text-right flex-shrink-0 ml-2">
@@ -377,8 +387,8 @@ export default function LaunchPage() {
           wave={wave}
           color={badgeColor}
           initial={teams[badgeColor]?.badges ?? []}
-          onSave={s => { setState(s); setBadgeColor(null); }}
-          onCancel={() => setBadgeColor(null)}
+          onUpdate={s => setState(s)}
+          onClose={() => setBadgeColor(null)}
         />
       )}
     </div>

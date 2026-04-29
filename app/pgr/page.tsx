@@ -91,7 +91,7 @@ function EntryForm({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end z-50" onClick={onCancel}>
       <div
-        className="w-full bg-white rounded-t-2xl max-h-[92vh] overflow-y-auto"
+        className="w-full bg-white rounded-t-2xl max-h-[92vh] overflow-y-auto max-w-2xl mx-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Sticky header */}

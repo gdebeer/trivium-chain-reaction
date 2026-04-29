@@ -430,17 +430,6 @@ function ControlTab({ state, onAction }: ControlTabProps) {
         })}
       </div>
 
-      {/* Status bar */}
-      <div className="px-4 pt-3 pb-2 flex-shrink-0">
-        <div className="bg-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
-          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${state.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-          <span className="text-sm text-gray-600">
-            {state.status === 'active' && state.currentWord
-              ? <>Showing: <span className="font-semibold text-gray-900">{state.currentWord}</span></>
-              : <span className="text-gray-400">Showing waiting screen</span>}
-          </span>
-        </div>
-      </div>
 
       {state.rounds.length === 0 ? (
         <div className="flex-1 flex items-center justify-center px-8 text-center">

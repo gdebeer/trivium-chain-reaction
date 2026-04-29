@@ -117,7 +117,7 @@ function BadgeModal({
               {b.trim() && (
                 <button
                   type="button"
-                  onClick={() => { if (confirm('Clear this badge?')) setBadge(i, ''); }}
+                  onClick={() => { if (confirm(`Clear badge ${b.trim()}?`)) setBadge(i, ''); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 active:text-red-500 text-lg leading-none"
                 >
                   ×

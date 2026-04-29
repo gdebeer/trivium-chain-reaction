@@ -33,17 +33,35 @@ Participant display for TTT: `/display`
 
 ## Badge Numbers
 
-55 valid codes defined in `lib/badge-list.ts`.
+### Where the list lives
+`lib/badge-list.ts` → `VALID_BADGE_SET` (a `Set<string>`). To update the list, replace the contents of that set. **The rules below apply automatically — no other code needs to change.**
 
-**First digit encodes station visit order:**
-- `1` → PGR → TTT → Launch
-- `2` → Launch → PGR → TTT
-- `3` → TTT → Launch → PGR
-- `4` → PGR → Launch → TTT
-- `5` → Launch → TTT → PGR
-- `6` → TTT → PGR → Launch
+### Sorting rules (applied automatically from the badge number alone)
 
-Badge validation is **warnings-only, never blocking**. Invalid/duplicate badges show colored borders + ⚠ text. Cross-station duplicate detection via `GET /api/badges`.
+**Rule 1 — First digit → station visit order (wave assignment)**
+
+| First digit | PGR wave | TTT wave | Launch wave |
+|---|---|---|---|
+| 1 | 1 | 2 | 3 |
+| 2 | 2 | 3 | 1 |
+| 3 | 3 | 1 | 2 |
+| 4 | 1 | 3 | 2 |
+| 5 | 3 | 2 | 1 |
+| 6 | 2 | 1 | 3 |
+
+Used for: wave-mismatch warnings at PGR and Launch; pre-computing TTT team rosters.
+
+**Rule 2 — Last digit → TTT team (odd/even)**
+- Odd last digit → **Team X**
+- Even last digit → **Team O**
+
+Used for: auto-populating TTT SubmitTab team columns. Host only needs to tap ⇄ if someone switches day-of.
+
+### Validation behaviour (all stations)
+- Unknown badge code → ⚠ warning (red border), saving never blocked
+- Badge used more than once at the same station → ⚠ warning (amber border)
+- Badge at wrong wave for that station → ⚠ warning
+- Manually overridden TTT team assignment → ↕ indicator on chip
 
 ---
 
@@ -104,7 +122,5 @@ Env vars: `KV_REST_API_URL`, `KV_REST_API_TOKEN`
 
 ## Pending / Undecided
 
-- "Wave" vs "Heat" — user asked for alternatives, hasn't decided
-- Badge first-digit routing — could be used for cross-station validation or auto-wave suggestions, no specific ask yet
 - Google Sheets: wired for PGR but settings gear removed from UI; may need to revisit
 - Folder restructuring — mentioned but not urgent

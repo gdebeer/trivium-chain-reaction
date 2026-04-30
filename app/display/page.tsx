@@ -68,7 +68,7 @@ export default function DisplayPage() {
 
   if (stopped) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
+      <div className="bg-black flex flex-col items-center justify-center gap-6" style={{ height: '100dvh' }}>
         <p className="text-gray-600 text-xl">Display timed out.</p>
         <button
           onClick={() => { startedAt.current = Date.now(); setStopped(false); }}
@@ -82,14 +82,14 @@ export default function DisplayPage() {
 
   if (!state) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="bg-black flex items-center justify-center" style={{ height: '100dvh' }}>
         <span className="text-gray-800 text-4xl animate-pulse">●</span>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-black flex flex-col overflow-hidden">
+    <div className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
       {state.scoreVisible && (
         <div className="flex justify-between items-start px-10 pt-8 flex-shrink-0 pointer-events-none">
           <div className="flex flex-col items-center gap-1">

@@ -93,12 +93,12 @@ export default function DisplayPage() {
       {state.scoreVisible && (
         <div className="flex justify-between items-start px-10 pt-8 flex-shrink-0 pointer-events-none">
           <div className="flex flex-col items-center gap-1">
-            <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>X</span>
-            <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>{state.displayXScore ?? 0}</span>
+            <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1.5rem, 5vw, 3.5rem)' }}>X</span>
+            <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(5rem, 18vw, 14rem)' }}>{state.displayXScore ?? 0}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-sky-400 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>O</span>
-            <span className="text-sky-300 font-black leading-none" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>{state.displayOScore ?? 0}</span>
+            <span className="text-sky-400 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1.5rem, 5vw, 3.5rem)' }}>O</span>
+            <span className="text-sky-300 font-black leading-none" style={{ fontSize: 'clamp(5rem, 18vw, 14rem)' }}>{state.displayOScore ?? 0}</span>
           </div>
         </div>
       )}

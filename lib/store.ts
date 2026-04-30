@@ -67,6 +67,9 @@ export async function applyAction(action: GameAction): Promise<GameState> {
       next = { ...state, rounds: reordered };
       break;
     }
+    case 'SET_SCORE_VISIBILITY':
+      next = { ...state, scoreVisible: action.visible, displayXScore: action.xScore, displayOScore: action.oScore };
+      break;
     default:
       next = state;
   }

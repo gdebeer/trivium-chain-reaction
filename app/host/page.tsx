@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
 import { tttDefaultTeams, VALID_BADGE_SET, BADGE_NAMES } from '@/lib/badge-list';
@@ -341,6 +341,8 @@ function ControlTab({ state, onAction }: ControlTabProps) {
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState('');
   const [showBadges, setShowBadges] = useState(false);
+  const [scoreVisible, setScoreVisible] = useState(false);
+  const scoreVisibleRef = useRef(false);
 
   useEffect(() => {
     tttApi<TTTState>('/api/ttt/waves').then(s => {
@@ -353,14 +355,37 @@ function ControlTab({ state, onAction }: ControlTabProps) {
 
   function switchWave(w: 1 | 2 | 3) {
     setWave(w);
-    // Restore saved scores for the target wave, or 0 if not yet submitted
     const saved = tttState?.waves.find(wv => wv.wave === w);
     setScores({ x: saved?.xScore ?? 0, o: saved?.oScore ?? 0 });
     setSubmitMsg('');
+    // Hide score on display when changing waves
+    if (scoreVisibleRef.current) {
+      scoreVisibleRef.current = false;
+      setScoreVisible(false);
+      syncScoreDisplay(false, 0, 0);
+    }
   }
 
-  const adjust = (team: 'x' | 'o', delta: number) =>
-    setScores(s => ({ ...s, [team]: Math.max(0, s[team] + delta) }));
+  async function syncScoreDisplay(visible: boolean, x: number, o: number) {
+    await sendAction({ type: 'SET_SCORE_VISIBILITY', visible, xScore: x, oScore: o });
+  }
+
+  const adjust = (team: 'x' | 'o', delta: number) => {
+    setScores(s => {
+      const next = { ...s, [team]: Math.max(0, s[team] + delta) };
+      if (scoreVisibleRef.current) {
+        syncScoreDisplay(true, next.x, next.o);
+      }
+      return next;
+    });
+  };
+
+  async function toggleScoreVisible(newScores: { x: number; o: number }) {
+    const next = !scoreVisibleRef.current;
+    scoreVisibleRef.current = next;
+    setScoreVisible(next);
+    await syncScoreDisplay(next, newScores.x, newScores.o);
+  }
 
   async function handleSubmit() {
     setSubmitting(true);
@@ -535,12 +560,24 @@ function ControlTab({ state, onAction }: ControlTabProps) {
           <div className="px-4 pb-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Score — Wave {wave}</p>
-              <button
-                onClick={() => setShowBadges(true)}
-                className="text-xs text-indigo-600 font-semibold active:opacity-70"
-              >
-                Edit Badges ›
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => toggleScoreVisible(scores)}
+                  className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
+                    scoreVisible
+                      ? 'bg-emerald-600 border-emerald-600 text-white'
+                      : 'bg-white border-gray-300 text-gray-500 active:bg-gray-50'
+                  }`}
+                >
+                  {scoreVisible ? '👁 On Display' : '👁 Hidden'}
+                </button>
+                <button
+                  onClick={() => setShowBadges(true)}
+                  className="text-xs text-indigo-600 font-semibold active:opacity-70"
+                >
+                  Edit Badges ›
+                </button>
+              </div>
             </div>
             <div className="flex gap-3 mb-2">
               {([['x', 'X', 'text-orange-600', 'bg-orange-600', 'border-orange-200'],

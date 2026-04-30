@@ -89,27 +89,9 @@ export default function DisplayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-8 overflow-hidden relative">
-      <div key={animKey} className="word-reveal text-center max-w-5xl w-full">
-        {state.status === 'waiting' || !state.currentWord ? (
-          <p
-            className="text-gray-600 font-light tracking-[0.25em] uppercase"
-            style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}
-          >
-            Waiting…
-          </p>
-        ) : (
-          <p
-            className="text-white font-black leading-none break-words"
-            style={{ fontSize: 'clamp(3rem, 14vw, 9rem)' }}
-          >
-            {displayWord(state.currentWord)}
-          </p>
-        )}
-      </div>
-
+    <div className="h-screen bg-black flex flex-col overflow-hidden">
       {state.scoreVisible && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between items-end px-10 pb-8 pointer-events-none">
+        <div className="flex justify-between items-start px-10 pt-8 flex-shrink-0 pointer-events-none">
           <div className="flex flex-col items-center gap-1">
             <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1rem, 3vw, 2rem)' }}>X</span>
             <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>{state.displayXScore ?? 0}</span>
@@ -120,6 +102,26 @@ export default function DisplayPage() {
           </div>
         </div>
       )}
+
+      <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
+        <div key={animKey} className="word-reveal text-center max-w-5xl w-full">
+          {state.status === 'waiting' || !state.currentWord ? (
+            <p
+              className="text-gray-600 font-light tracking-[0.25em] uppercase"
+              style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}
+            >
+              Waiting…
+            </p>
+          ) : (
+            <p
+              className="text-white font-black leading-none break-words"
+              style={{ fontSize: 'clamp(3rem, 14vw, 9rem)' }}
+            >
+              {displayWord(state.currentWord)}
+            </p>
+          )}
+        </div>
+      </div>
 
       <style>{`
         @keyframes wordReveal {

@@ -52,8 +52,8 @@ Participant display for TTT: `/display`
 | First digit | PGR wave | TTT wave | Launch wave |
 |---|---|---|---|
 | 1 | 1 | 2 | 3 |
-| 2 | 2 | 3 | 1 |
-| 3 | 3 | 1 | 2 |
+| 2 | 3 | 1 | 2 |
+| 3 | 2 | 3 | 1 |
 | 4 | 1 | 3 | 2 |
 | 5 | 3 | 2 | 1 |
 | 6 | 2 | 1 | 3 |

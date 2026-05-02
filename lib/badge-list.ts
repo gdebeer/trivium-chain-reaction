@@ -108,7 +108,7 @@ export function badgeWarnings(badges: string[], statuses: BadgeStatus[]): string
 // ─── Badge digit rules ────────────────────────────────────────────────────────
 //
 // DIGIT 1 (first digit) → station visit order / wave assignment
-//   Schedule: 1=PGR→TTT→Launch  2=Launch→PGR→TTT  3=TTT→Launch→PGR
+//   Schedule: 1=PGR→TTT→Launch  2=TTT→Launch→PGR  3=Launch→PGR→TTT
 //             4=PGR→Launch→TTT  5=Launch→TTT→PGR  6=TTT→PGR→Launch
 //
 // DIGIT 2 (middle digit) → initial Launch team assignment
@@ -123,8 +123,8 @@ export function badgeWarnings(badges: string[], statuses: BadgeStatus[]): string
 
 const STATION_WAVE_FOR_DIGIT: Record<string, Record<'pgr' | 'ttt' | 'launch', 1 | 2 | 3>> = {
   '1': { pgr: 1, ttt: 2, launch: 3 },
-  '2': { pgr: 2, ttt: 3, launch: 1 },
-  '3': { pgr: 3, ttt: 1, launch: 2 },
+  '2': { pgr: 3, ttt: 1, launch: 2 },
+  '3': { pgr: 2, ttt: 3, launch: 1 },
   '4': { pgr: 1, ttt: 3, launch: 2 },
   '5': { pgr: 3, ttt: 2, launch: 1 },
   '6': { pgr: 2, ttt: 1, launch: 3 },

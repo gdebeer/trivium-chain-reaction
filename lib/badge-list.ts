@@ -179,9 +179,9 @@ export function tttDefaultTeams(wave: 1 | 2 | 3): { x: string[]; o: string[] } {
 // ─── Launch pre-computed teams ────────────────────────────────────────────────
 
 // Second digit → Launch team colour
-// 1=Red  2=Orange  3=Green  4=Blue  5=Purple
-const LAUNCH_TEAM_DIGIT: Record<'Red' | 'Orange' | 'Green' | 'Blue' | 'Purple', string> = {
-  Red: '1', Orange: '2', Green: '3', Blue: '4', Purple: '5',
+// 1=Red  2=Orange  3=Yellow  4=Green  5=Blue  6=Purple
+const LAUNCH_TEAM_DIGIT: Record<'Red' | 'Orange' | 'Yellow' | 'Green' | 'Blue' | 'Purple', string> = {
+  Red: '1', Orange: '2', Yellow: '3', Green: '4', Blue: '5', Purple: '6',
 };
 
 /**
@@ -191,7 +191,7 @@ const LAUNCH_TEAM_DIGIT: Record<'Red' | 'Orange' | 'Green' | 'Blue' | 'Purple', 
  */
 export function launchDefaultBadges(
   wave: 1 | 2 | 3,
-  color: 'Red' | 'Orange' | 'Green' | 'Blue' | 'Purple',
+  color: 'Red' | 'Orange' | 'Yellow' | 'Green' | 'Blue' | 'Purple',
 ): string[] {
   const teamDigit = LAUNCH_TEAM_DIGIT[color];
   const result: string[] = [];

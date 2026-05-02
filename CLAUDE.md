@@ -61,7 +61,7 @@ Participant display for TTT: `/display`
 Used for: wave-mismatch warnings at PGR and Launch; pre-computing TTT and Launch team rosters.
 
 **Rule 2 — Second (middle) digit → initial Launch team assignment**
-- `1` = Red · `2` = Orange · `3` = Green · `4` = Blue · `5` = Purple
+- `1` = Red · `2` = Orange · `3` = Yellow · `4` = Green · `5` = Blue · `6` = Purple
 - These are *defaults* — most likely to change due to no-shows. Host adjusts in the badge modal day-of.
 - Team cards show "N expected" (dashed border) when not yet confirmed; confirmed shows solid with count.
 

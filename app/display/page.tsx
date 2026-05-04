@@ -91,13 +91,13 @@ export default function DisplayPage() {
   return (
     <div className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
       {state.scoreVisible ? (
-        <div className="flex-1 flex items-center justify-center gap-16 px-10">
+        <div className="flex-1 flex items-center justify-center gap-28 px-10">
           <div className="flex flex-col items-center gap-2">
-            <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>X</span>
+            <span className="text-orange-500 font-black uppercase tracking-widest border-b-4 border-orange-500 pb-1" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>X</span>
             <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(8rem, 28vw, 22rem)' }}>{state.displayXScore ?? 0}</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-sky-400 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>O</span>
+            <span className="text-sky-400 font-black uppercase tracking-widest border-b-4 border-sky-400 pb-1" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)' }}>O</span>
             <span className="text-sky-300 font-black leading-none" style={{ fontSize: 'clamp(8rem, 28vw, 22rem)' }}>{state.displayOScore ?? 0}</span>
           </div>
         </div>

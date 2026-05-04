@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
-import { tttDefaultTeams, VALID_BADGE_SET, BADGE_NAMES } from '@/lib/badge-list';
+import { tttDefaultTeams, VALID_BADGE_SET, BADGE_NAMES, BACKUP_BADGES } from '@/lib/badge-list';
 
 // ─── API helpers ────────────────────────────────────────────────────────────
 
@@ -250,17 +250,20 @@ function TTTBadgeModal({
         <div className={`flex flex-wrap content-start gap-1.5 p-2 bg-gray-50 rounded-xl border ${borderColor} min-h-16 mb-2 flex-1`}>
           {badges.map(b => {
             const isOverride = defaultTeam(b) !== team;
-            const chipBase = isOverride
-              ? 'border-2 border-amber-400 bg-amber-50'
-              : 'border border-gray-200 bg-white';
+            const isBackup = BACKUP_BADGES.has(b);
+            const chipBase = isBackup
+              ? 'border border-dashed border-gray-300 bg-white opacity-50'
+              : isOverride
+                ? 'border-2 border-amber-400 bg-amber-50'
+                : 'border border-gray-200 bg-white';
             return (
               <div key={b} className={`flex items-center rounded-lg text-xs font-mono overflow-hidden ${chipBase}`}>
                 <button
                   onClick={() => moveBadge(b, team)}
-                  title={`Move to Team ${team === 'x' ? 'O' : 'X'}`}
-                  className={`flex items-center gap-1 pl-2.5 pr-2 py-2 active:opacity-70 ${isOverride ? 'font-bold' : ''}`}
+                  title={isBackup ? 'Backup slot' : `Move to Team ${team === 'x' ? 'O' : 'X'}`}
+                  className={`flex items-center gap-1 pl-2.5 pr-2 py-2 active:opacity-70 ${isOverride && !isBackup ? 'font-bold' : ''}`}
                 >
-                  {b} <span className="text-gray-400 text-xs">⇄</span>
+                  {b} <span className="text-gray-400 text-xs">{isBackup ? '?' : '⇄'}</span>
                 </button>
                 <button
                   onClick={() => removeBadge(b, team)}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import type { BadgeResult, ResultsPayload } from '@/app/api/results/route';
-import { BADGE_NAMES } from '@/lib/badge-list';
+import { BADGE_NAMES, BACKUP_BADGES } from '@/lib/badge-list';
 
 type View = 'scaled' | 'raw';
 type Sort = 'rank' | 'name';
@@ -154,12 +154,14 @@ export default function ResultsPage() {
             {displayed.map((r) => {
               const rank = r.rank;
               const isTop3 = rank <= 3;
+              const isBackup = BACKUP_BADGES.has(r.badge);
 
-              const rankBg =
-                rank === 1 ? 'bg-yellow-500/10 border border-yellow-500/30' :
-                rank === 2 ? 'bg-gray-400/10 border border-gray-400/20' :
-                rank === 3 ? 'bg-orange-700/10 border border-orange-700/20' :
-                'bg-gray-900 border border-gray-800';
+              const rankBg = isBackup
+                ? 'bg-gray-900 border border-dashed border-gray-700 opacity-40'
+                : rank === 1 ? 'bg-yellow-500/10 border border-yellow-500/30' :
+                  rank === 2 ? 'bg-gray-400/10 border border-gray-400/20' :
+                  rank === 3 ? 'bg-orange-700/10 border border-orange-700/20' :
+                  'bg-gray-900 border border-gray-800';
 
               const totalColor =
                 rank === 1 ? 'text-yellow-400' :

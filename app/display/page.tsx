@@ -90,38 +90,38 @@ export default function DisplayPage() {
 
   return (
     <div className="bg-black flex flex-col overflow-hidden" style={{ height: '100dvh' }}>
-      {state.scoreVisible && (
-        <div className="flex justify-between items-start px-10 pt-8 flex-shrink-0 pointer-events-none">
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1.5rem, 5vw, 3.5rem)' }}>X</span>
-            <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(5rem, 18vw, 14rem)' }}>{state.displayXScore ?? 0}</span>
+      {state.scoreVisible ? (
+        <div className="flex-1 flex items-center justify-center gap-16 px-10">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-orange-500 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(2rem, 6vw, 4rem)' }}>X</span>
+            <span className="text-orange-400 font-black leading-none" style={{ fontSize: 'clamp(8rem, 28vw, 22rem)' }}>{state.displayXScore ?? 0}</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-sky-400 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(1.5rem, 5vw, 3.5rem)' }}>O</span>
-            <span className="text-sky-300 font-black leading-none" style={{ fontSize: 'clamp(5rem, 18vw, 14rem)' }}>{state.displayOScore ?? 0}</span>
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-sky-400 font-black uppercase tracking-widest" style={{ fontSize: 'clamp(2rem, 6vw, 4rem)' }}>O</span>
+            <span className="text-sky-300 font-black leading-none" style={{ fontSize: 'clamp(8rem, 28vw, 22rem)' }}>{state.displayOScore ?? 0}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
+          <div key={animKey} className="word-reveal text-center max-w-5xl w-full">
+            {state.status === 'waiting' || !state.currentWord ? (
+              <p
+                className="text-gray-600 font-light tracking-[0.25em] uppercase"
+                style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}
+              >
+                Waiting…
+              </p>
+            ) : (
+              <p
+                className="text-white font-black leading-none break-words"
+                style={{ fontSize: 'clamp(3rem, 14vw, 9rem)' }}
+              >
+                {displayWord(state.currentWord)}
+              </p>
+            )}
           </div>
         </div>
       )}
-
-      <div className="flex-1 flex items-center justify-center p-8 overflow-hidden">
-        <div key={animKey} className="word-reveal text-center max-w-5xl w-full">
-          {state.status === 'waiting' || !state.currentWord ? (
-            <p
-              className="text-gray-600 font-light tracking-[0.25em] uppercase"
-              style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}
-            >
-              Waiting…
-            </p>
-          ) : (
-            <p
-              className="text-white font-black leading-none break-words"
-              style={{ fontSize: 'clamp(3rem, 14vw, 9rem)' }}
-            >
-              {displayWord(state.currentWord)}
-            </p>
-          )}
-        </div>
-      </div>
 
       <style>{`
         @keyframes wordReveal {

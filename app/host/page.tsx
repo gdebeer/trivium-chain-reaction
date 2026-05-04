@@ -548,7 +548,18 @@ function ControlTab({ state, onAction }: ControlTabProps) {
               </a>
             </div>
             <div className="bg-black rounded-2xl h-28 flex items-center justify-center overflow-hidden">
-              {state.status === 'waiting' || !state.currentWord ? (
+              {scoreVisible ? (
+                <div className="flex items-center justify-center gap-8 w-full px-6">
+                  <div className="flex flex-col items-center">
+                    <span className="text-orange-500 font-black text-xs uppercase tracking-widest">X</span>
+                    <span className="text-orange-400 font-black leading-none text-4xl">{scores.x}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-sky-400 font-black text-xs uppercase tracking-widest">O</span>
+                    <span className="text-sky-300 font-black leading-none text-4xl">{scores.o}</span>
+                  </div>
+                </div>
+              ) : state.status === 'waiting' || !state.currentWord ? (
                 <p className="text-gray-600 text-sm font-light tracking-widest uppercase">Waiting…</p>
               ) : (
                 <p className="text-white font-black text-center px-4 leading-none"

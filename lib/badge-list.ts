@@ -49,7 +49,7 @@ export const BADGE_NAMES: Record<string, string> = {
   '625': 'Xan Tanner',
   '636': 'Chris Taylor',
   '641': 'Amanda Tommasino',
-  '648': 'Matthew Vega-Sanz',
+
   '652': 'Jean-Sébastien Wallez',
   '657': 'Robyn Ward',
   '660': 'Jonathan White',
@@ -69,7 +69,7 @@ export const VALID_BADGE_SET = new Set([
   '311', '318', '322', '327', '330', '333', '344', '355', '366',
   '413', '424', '435', '440', '447', '451', '456', '462', '465',
   '513', '524', '535', '540', '547', '551', '556', '561', '562',
-  '614', '625', '636', '641', '648', '652', '657', '660', '663',
+  '614', '625', '636', '641', '652', '657', '660', '663',
   // Backup badges — pre-populate in TTT only
   '113', '231', '351', '442', '560', '620',
 ]);

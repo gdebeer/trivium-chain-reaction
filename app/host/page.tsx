@@ -549,14 +549,25 @@ function ControlTab({ state, onAction }: ControlTabProps) {
             </div>
             <div className="bg-black rounded-2xl h-28 flex items-center justify-center overflow-hidden">
               {scoreVisible ? (
-                <div className="flex items-center justify-center gap-8 w-full px-6">
-                  <div className="flex flex-col items-center">
-                    <span className="text-orange-500 font-black text-xs uppercase tracking-widest">X</span>
-                    <span className="text-orange-400 font-black leading-none text-4xl">{scores.x}</span>
+                <div className="flex flex-col items-stretch justify-center w-full h-full">
+                  <div className="flex">
+                    <div className="flex-1 flex justify-center pb-1">
+                      <span className="text-orange-500 font-black text-sm uppercase tracking-widest">X</span>
+                    </div>
+                    <div className="w-px" />
+                    <div className="flex-1 flex justify-center pb-1">
+                      <span className="text-sky-400 font-black text-sm uppercase tracking-widest">O</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <span className="text-sky-400 font-black text-xs uppercase tracking-widest">O</span>
-                    <span className="text-sky-300 font-black leading-none text-4xl">{scores.o}</span>
+                  <div className="h-px bg-white w-full" />
+                  <div className="flex items-center flex-1">
+                    <div className="flex-1 flex justify-center py-2">
+                      <span className="text-orange-400 font-black leading-none text-4xl">{scores.x}</span>
+                    </div>
+                    <div className="w-px bg-white self-stretch" />
+                    <div className="flex-1 flex justify-center py-2">
+                      <span className="text-sky-300 font-black leading-none text-4xl">{scores.o}</span>
+                    </div>
                   </div>
                 </div>
               ) : state.status === 'waiting' || !state.currentWord ? (

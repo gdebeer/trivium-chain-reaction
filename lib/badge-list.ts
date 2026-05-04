@@ -54,6 +54,13 @@ export const BADGE_NAMES: Record<string, string> = {
   '657': 'Robyn Ward',
   '660': 'Jonathan White',
   '663': 'Justin Whitehead',
+  // Backup badges — TTT only, excluded from Launch pre-population
+  '113': 'Backup',
+  '231': 'Backup',
+  '351': 'Backup',
+  '442': 'Backup',
+  '560': 'Backup',
+  '620': 'Backup',
 };
 
 export const VALID_BADGE_SET = new Set([
@@ -63,7 +70,12 @@ export const VALID_BADGE_SET = new Set([
   '413', '424', '435', '440', '447', '451', '456', '462', '465',
   '513', '524', '535', '540', '547', '551', '556', '561', '562',
   '614', '625', '636', '641', '648', '652', '657', '660', '663',
+  // Backup badges — pre-populate in TTT only
+  '113', '231', '351', '442', '560', '620',
 ]);
+
+// Excluded from Launch pre-population — TTT only
+export const BACKUP_BADGES = new Set(['113', '231', '351', '442', '560', '620']);
 
 export type BadgeStatus = 'empty' | 'valid' | 'invalid' | 'duplicate';
 
@@ -196,6 +208,7 @@ export function launchDefaultBadges(
   const teamDigit = LAUNCH_TEAM_DIGIT[color];
   const result: string[] = [];
   for (const badge of VALID_BADGE_SET) {
+    if (BACKUP_BADGES.has(badge)) continue;
     if (getExpectedWave(badge, 'launch') !== wave) continue;
     if (badge[1] !== teamDigit) continue;
     result.push(badge);

@@ -53,7 +53,7 @@ export const BADGE_NAMES: Record<string, string> = {
   '660': 'Jonathan White',
   '663': 'Justin Whitehead',
   // Backup badges — TTT only, excluded from Launch pre-population
-  '113': 'Backup',
+  '113': 'Eliot Buchanan',
   '231': 'Backup',
   '351': 'Backup',
   '442': 'Backup',
@@ -62,7 +62,7 @@ export const BADGE_NAMES: Record<string, string> = {
 };
 
 export const VALID_BADGE_SET = new Set([
-  '111', '118', '122', '127', '130', '139', '155', '166',
+  '111', '113', '118', '122', '127', '130', '139', '155', '166',
   '211', '218', '222', '227', '230', '233', '241', '255', '266',
   '311', '318', '322', '327', '330', '333', '344', '355', '366',
   '413', '424', '435', '440', '447', '451', '456', '462', '465',
@@ -73,7 +73,7 @@ export const VALID_BADGE_SET = new Set([
 ]);
 
 // Excluded from Launch pre-population — TTT only
-export const BACKUP_BADGES = new Set(['113', '231', '351', '442', '560', '620']);
+export const BACKUP_BADGES = new Set(['231', '351', '442', '560', '620']);
 
 export type BadgeStatus = 'empty' | 'valid' | 'invalid' | 'duplicate';
 

@@ -1,5 +1,7 @@
 'use client';
 
+const LOCKED = true;
+
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { GameState, Round } from '@/lib/types';
 import type { TTTState, TTTWave } from '@/lib/ttt-types';
@@ -904,6 +906,16 @@ export default function HostPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col w-full max-w-2xl mx-auto">
+      {LOCKED && (
+        <div className="fixed inset-0 z-[100] bg-gray-950/95 flex flex-col items-center justify-center gap-6 px-8 text-center">
+          <span className="text-5xl">🔒</span>
+          <p className="text-white text-2xl font-black">Scoring Closed</p>
+          <p className="text-gray-400 text-sm">The event has ended and scores are final.</p>
+          <a href="/leaderboard" className="mt-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl text-sm active:bg-indigo-700">
+            View Leaderboard →
+          </a>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div>
